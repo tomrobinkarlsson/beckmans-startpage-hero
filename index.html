@@ -76,40 +76,17 @@
     }
 
     .nav-link {
-      appearance: none;
-      border: 0;
-      background: transparent;
       color: inherit;
-      font: inherit;
       font-size: 16px;
       letter-spacing: -0.02em;
       text-transform: lowercase;
       line-height: 1;
-      height: auto;
-      padding: 0;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      transition: color 260ms ease, opacity 260ms ease;
+      transition: color 260ms ease;
       white-space: nowrap;
     }
-
-    .nav-link[data-index]::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: -6px;
-      width: 0;
-      height: 2px;
-      background: #ff5b57;
-      transform: translateX(-50%);
-      transition: width 250ms ease;
-    }
-
-    .nav-link.is-active[data-index]::after { width: 100%; }
-    .nav-link.static { cursor: default; }
 
     .headline {
       position: absolute;
@@ -131,15 +108,27 @@
       letter-spacing: -0.04em;
       color: #000;
       opacity: 1;
-      transition: opacity 300ms ease, color 260ms ease;
+      width: fit-content;
+      transition: opacity 320ms ease, color 280ms ease, transform 320ms ease;
     }
 
-    .line.is-active { opacity: 1; }
+    .line[data-index] {
+      cursor: pointer;
+    }
+
+    .line[data-index]:hover {
+      transform: translateX(6px);
+    }
+
+    .line.is-active {
+      opacity: 1;
+      transform: translateX(8px);
+    }
 
     .hp {
       position: absolute;
-      right: 170px;
-      top: 41px;
+      left: 364px;
+      top: 201px;
       margin: 0;
       font-size: clamp(28px, 3.35vw, 48px);
       line-height: 1;
@@ -147,7 +136,8 @@
       color: #fff;
       z-index: 2;
       opacity: 0;
-      transition: top 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease;
+      will-change: top, left, opacity;
+      transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease;
     }
 
     .hero.is-idle .top-nav,
@@ -181,7 +171,7 @@
       .menu { gap: 16px; flex-wrap: wrap; }
       .brand { font-size: 14px; }
       .nav-link { font-size: 14px; }
-      .hp { right: 24px; }
+      .hp { left: auto; right: 24px; transition: top 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease; }
     }
   </style>
 </head>
@@ -193,18 +183,18 @@
     <nav class="top-nav">
       <span class="brand">beckmans designhögskola</span>
       <div class="menu" id="menu">
-        <button class="nav-link" data-state="form" data-index="0">form</button>
-        <button class="nav-link" data-state="mode" data-index="1">mode</button>
-        <button class="nav-link" data-state="visuell kommunikation" data-index="2">visuell kommunikation</button>
-        <span class="nav-link static">kvällskolan</span>
-        <span class="nav-link static">ansök</span>
+        <span class="nav-link">form</span>
+        <span class="nav-link">mode</span>
+        <span class="nav-link">visuell kommunikation</span>
+        <span class="nav-link">kvällskolan</span>
+        <span class="nav-link">ansök</span>
       </div>
     </nav>
 
     <div class="headline">
-      <p class="line is-active" data-line="0">form</p>
-      <p class="line" data-line="1">mode</p>
-      <p class="line" data-line="2">visuell kommunikation</p>
+      <p class="line" data-line data-index="0" tabindex="0">form</p>
+      <p class="line" data-line data-index="1" tabindex="0">mode</p>
+      <p class="line" data-line data-index="2" tabindex="0">visuell kommunikation</p>
     </div>
     <p class="hp" id="hp">180hp</p>
   </section>
@@ -213,34 +203,40 @@
     const states = [
       {
         image: "https://beckmans.se/wp-content/uploads/2025/02/hallway-bench-mikael-westman-01-1500x1000.jpg",
-        hpRatio: 0.05125
+        hpXRatio: 0.2528,
+        hpYRatio: 0.2513
       },
       {
         image: "https://beckmans.se/wp-content/uploads/2025/06/Erik-Marklund-Beckmans-Designhogskola-4-1500x1200.jpg",
-        hpRatio: 0.25375
+        hpXRatio: 0.3097,
+        hpYRatio: 0.4538
       },
       {
         image: "https://beckmans.se/wp-content/uploads/2025/12/491418745_18385417684138754_597021362675519425_n.jpeg",
-        hpRatio: 0.85875
+        hpXRatio: 0.7896,
+        hpYRatio: 0.8588
       }
     ];
 
     const hero = document.querySelector(".hero");
-    const menu = document.getElementById("menu");
+    const headline = document.querySelector(".headline");
     const bgA = document.getElementById("bg-a");
     const bgB = document.getElementById("bg-b");
     const hp = document.getElementById("hp");
     const lines = [...document.querySelectorAll("[data-line]")];
-    const stateButtons = [...document.querySelectorAll("[data-index]")];
+    const textLinks = [...document.querySelectorAll(".line[data-index]")];
 
     let current = -1;
     let showA = true;
 
     function paintText(index) {
       lines.forEach((line, i) => line.classList.toggle("is-active", i === index));
-      stateButtons.forEach((button, i) => button.classList.toggle("is-active", i === index));
-      const pxTop = Math.round(hero.clientHeight * states[index].hpRatio);
+      const pxTop = Math.round(hero.clientHeight * states[index].hpYRatio);
+      const pxLeft = Math.round(hero.clientWidth * states[index].hpXRatio);
       hp.style.top = `${pxTop}px`;
+      if (window.innerWidth > 1050) {
+        hp.style.left = `${pxLeft}px`;
+      }
     }
 
     function paintBackground(index) {
@@ -248,7 +244,7 @@
       const prevLayer = showA ? bgA : bgB;
       const img = nextLayer.querySelector("img");
       img.src = states[index].image;
-      img.alt = `Beckmans ${stateButtons[index].dataset.state}`;
+      img.alt = `Beckmans ${textLinks[index].textContent.trim()}`;
       nextLayer.classList.add("is-visible");
       prevLayer.classList.remove("is-visible");
       showA = !showA;
@@ -266,24 +262,23 @@
       current = -1;
       hero.classList.add("is-idle");
       lines.forEach((line) => line.classList.remove("is-active"));
-      stateButtons.forEach((button) => button.classList.remove("is-active"));
       bgA.classList.remove("is-visible");
       bgB.classList.remove("is-visible");
     }
 
     function init() {
       setIdle();
-      stateButtons.forEach((button, index) => {
-        button.addEventListener("mouseenter", () => setState(index));
-        button.addEventListener("focus", () => setState(index));
-        button.addEventListener("click", () => setState(index));
-        button.addEventListener("blur", () => {
+      textLinks.forEach((link, index) => {
+        link.addEventListener("mouseenter", () => setState(index));
+        link.addEventListener("focus", () => setState(index));
+        link.addEventListener("click", () => setState(index));
+        link.addEventListener("blur", () => {
           window.setTimeout(() => {
-            if (!menu.contains(document.activeElement)) setIdle();
+            if (!headline.contains(document.activeElement)) setIdle();
           }, 0);
         });
       });
-      menu.addEventListener("mouseleave", setIdle);
+      headline.addEventListener("mouseleave", setIdle);
       hero.addEventListener("mouseleave", setIdle);
       window.addEventListener("resize", () => {
         if (current >= 0) paintText(current);
