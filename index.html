@@ -264,24 +264,24 @@
   </section>
 
   <script>
-    const DESIGN_W = 1440;
-    const DESIGN_H = 800;
+    const HEADLINE_DESIGN_W = 1118.5067;
+    const HEADLINE_DESIGN_H = 610;
 
     const states = [
       {
         image: "./assets/images/form.jpg",
-        hpX: 364,
-        hpY: 201
+        hpHX: 348,
+        hpHY: 41
       },
       {
         image: "./assets/images/mode.jpg",
-        hpX: 446,
-        hpY: 363
+        hpHX: 430,
+        hpHY: 203
       },
       {
         image: "./assets/images/vk.jpg",
-        hpX: 1137,
-        hpY: 687
+        hpHX: 1121,
+        hpHY: 527
       }
     ];
 
@@ -298,8 +298,14 @@
     let webglEnabled = false;
 
     function placeHp(index) {
-      const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
-      const pxLeft = Math.round((hero.clientWidth * states[index].hpX) / DESIGN_W);
+      const heroRect = hero.getBoundingClientRect();
+      const headlineRect = headline.getBoundingClientRect();
+      const relX = headlineRect.left - heroRect.left;
+      const relY = headlineRect.top - heroRect.top;
+      const scaleX = headlineRect.width / HEADLINE_DESIGN_W;
+      const scaleY = headlineRect.height / HEADLINE_DESIGN_H;
+      const pxLeft = Math.round(relX + states[index].hpHX * scaleX);
+      const pxTop = Math.round(relY + states[index].hpHY * scaleY);
       hp.style.top = `${pxTop}px`;
       hp.style.left = `${pxLeft}px`;
     }
@@ -357,7 +363,7 @@
         this.visible = false;
         this.animating = false;
         this.progress = 1;
-        this.duration = 860;
+        this.duration = 620;
         this.currentIndex = -1;
         this.pendingIndex = null;
         this.startTime = 0;
@@ -420,6 +426,13 @@
             return value;
           }
 
+          vec3 sampleRGB(sampler2D tex, vec2 uv, float shift) {
+            float r = texture2D(tex, uv + vec2(shift, 0.0)).r;
+            float g = texture2D(tex, uv).g;
+            float b = texture2D(tex, uv - vec2(shift, 0.0)).b;
+            return vec3(r, g, b);
+          }
+
           vec2 coverUv(vec2 uv, vec2 texSize, vec2 screenSize) {
             float rs = screenSize.x / screenSize.y;
             float ri = texSize.x / texSize.y;
@@ -435,19 +448,40 @@
           }
 
           void main() {
-            float p = smoothstep(0.0, 1.0, u_progress);
-            vec2 flow = vec2(
-              fbm(v_uv * 4.0 + u_time * 0.12),
-              fbm(v_uv.yx * 4.8 - u_time * 0.09)
-            ) - 0.5;
-            float strength = sin(p * 3.14159265) * 0.11;
+            float p = clamp(u_progress, 0.0, 1.0);
+            float e = smoothstep(0.0, 1.0, p);
+            float glitch = sin(e * 3.14159265);
 
-            vec2 fromUv = coverUv(v_uv + flow * strength * (0.6 + p), u_from_size, u_resolution);
-            vec2 toUv = coverUv(v_uv - flow * strength * (1.6 - p), u_to_size, u_resolution);
+            float row = floor(v_uv.y * (u_resolution.y / 3.0));
+            float rowNoise = hash(vec2(row, floor(u_time * 34.0)));
+            float rowShift = (rowNoise - 0.5) * 0.09 * glitch;
 
-            vec4 cFrom = texture2D(u_from, fromUv);
-            vec4 cTo = texture2D(u_to, toUv);
-            gl_FragColor = mix(cFrom, cTo, p);
+            vec2 block = floor(v_uv * vec2(46.0, 28.0));
+            float blockNoise = hash(block + floor(u_time * 20.0));
+            rowShift += (blockNoise - 0.5) * 0.06 * glitch;
+
+            float tearMask = step(0.82, hash(vec2(floor(u_time * 16.0), floor(v_uv.y * 24.0))));
+            float tearShift = (hash(vec2(floor(u_time * 53.0), floor(v_uv.y * 130.0))) - 0.5) * 0.2 * glitch;
+            rowShift += tearMask * tearShift;
+
+            vec2 fromUv = coverUv(v_uv + vec2(rowShift * (1.0 - e), 0.0), u_from_size, u_resolution);
+            vec2 toUv = coverUv(v_uv - vec2(rowShift * e, 0.0), u_to_size, u_resolution);
+
+            float rgbShift = 0.01 * glitch;
+            vec3 fromCol = sampleRGB(u_from, fromUv, rgbShift);
+            vec3 toCol = sampleRGB(u_to, toUv, -rgbShift);
+
+            float wipeNoise = fbm(v_uv * vec2(28.0, 22.0) + vec2(u_time * 0.05, -u_time * 0.03));
+            float mixAmt = clamp(e + (wipeNoise - 0.5) * 0.22 * glitch, 0.0, 1.0);
+            vec3 color = mix(fromCol, toCol, mixAmt);
+
+            float scan = sin(v_uv.y * u_resolution.y * 1.6) * 0.028 * (0.6 + glitch);
+            color -= scan;
+
+            float luma = dot(color, vec3(0.299, 0.587, 0.114));
+            color = mix(color, vec3(luma), 0.12 * glitch);
+
+            gl_FragColor = vec4(color, 1.0);
           }
         `;
 
