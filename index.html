@@ -262,11 +262,8 @@
   </section>
 
   <script>
-    const HP_LINK_OFFSETS = [
-      { x: 8, y: 6 },
-      { x: 8, y: 6 },
-      { x: 8, y: 6 }
-    ];
+    const DESIGN_W = 1440;
+    const DESIGN_H = 800;
 
     const states = [
       {
@@ -299,16 +296,8 @@
     let webglEnabled = false;
 
     function placeHp(index) {
-      const heroRect = hero.getBoundingClientRect();
-      const linkRect = textLinks[index].getBoundingClientRect();
-      const fallbackLeft = Math.round((hero.clientWidth * states[index].hpX) / 1440);
-      const fallbackTop = Math.round((hero.clientHeight * states[index].hpY) / 800);
-      const pxLeft = Number.isFinite(linkRect.right)
-        ? Math.round(linkRect.right - heroRect.left + HP_LINK_OFFSETS[index].x)
-        : fallbackLeft;
-      const pxTop = Number.isFinite(linkRect.top)
-        ? Math.round(linkRect.top - heroRect.top + HP_LINK_OFFSETS[index].y)
-        : fallbackTop;
+      const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
+      const pxLeft = Math.round((hero.clientWidth * states[index].hpX) / DESIGN_W);
       hp.style.top = `${pxTop}px`;
       hp.style.left = `${pxLeft}px`;
     }
@@ -370,6 +359,8 @@
         this.currentIndex = -1;
         this.pendingIndex = null;
         this.startTime = 0;
+        this.notifiedSettle = true;
+        this.onSettle = null;
         this.fromTexture = null;
         this.toTexture = null;
         this.fromSize = [1, 1];
@@ -645,6 +636,7 @@
         this.currentIndex = index;
         this.visible = true;
         this.animating = true;
+        this.notifiedSettle = false;
         this.progress = 0;
         this.startTime = performance.now();
       }
@@ -653,6 +645,7 @@
         this.visible = false;
         this.animating = false;
         this.currentIndex = -1;
+        this.notifiedSettle = true;
       }
 
       resize() {
@@ -698,6 +691,11 @@
         gl.uniform2f(this.uniforms.fromSize, this.fromSize[0], this.fromSize[1]);
         gl.uniform2f(this.uniforms.toSize, this.toSize[0], this.toSize[1]);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        if (!this.animating && !this.notifiedSettle) {
+          this.notifiedSettle = true;
+          if (typeof this.onSettle === "function") this.onSettle();
+        }
       }
 
       startLoop() {
@@ -758,6 +756,9 @@
         if (!ok) return;
         webglEnabled = true;
         hero.classList.add("has-webgl");
+        webglMorph.onSettle = () => {
+          hero.classList.remove("webgl-active");
+        };
         if (current >= 0) webglMorph.setTarget(current);
       });
     }
