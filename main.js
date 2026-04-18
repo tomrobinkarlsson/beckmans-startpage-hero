@@ -199,10 +199,9 @@ class DisplacementTransition {
       alpha: true,
       premultipliedAlpha: false,
       dpr: Math.min(devicePixelRatio || 1, 2),
+      width: this.canvas.parentElement.clientWidth,
+      height: this.canvas.parentElement.clientHeight,
     });
-    // OGL sets inline width/height — remove so CSS inset:0 controls layout
-    this.canvas.style.removeProperty('width');
-    this.canvas.style.removeProperty('height');
     const gl = this.renderer.gl;
 
     // Load shaders (files with inline fallback)
@@ -350,16 +349,14 @@ class DisplacementTransition {
     this.targetMouse = [x, y];
   }
 
-  // Sync canvas buffer to CSS layout
+  // Sync canvas to parent hero dimensions
   resize() {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
+    const parent = this.canvas.parentElement;
+    const w = parent.clientWidth;
+    const h = parent.clientHeight;
     this.renderer.setSize(w, h);
-    // Restore CSS so inset:0 controls layout, not OGL's inline styles
-    this.canvas.style.width = '';
-    this.canvas.style.height = '';
     if (this.program) {
-      this.program.uniforms.uResolution.value = [this.canvas.width, this.canvas.height];
+      this.program.uniforms.uResolution.value = [this.renderer.width, this.renderer.height];
     }
   }
 
