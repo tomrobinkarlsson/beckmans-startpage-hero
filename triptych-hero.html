@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beckmans — Triptych Hero</title>
+  <link rel="stylesheet" href="./triptych-hero.css" />
+</head>
+<body>
+  <section class="hero" id="hero" aria-label="Beckmans programs hero">
+    <header class="hero-topbar" aria-label="Main navigation">
+      <span class="hero-brand">beckmans designhögskola</span>
+      <span class="hero-nav hero-nav-form">form</span>
+      <span class="hero-nav hero-nav-mode">mode</span>
+      <span class="hero-nav hero-nav-vk">visuell kommunikation</span>
+      <span class="hero-nav hero-nav-evening">kvällskolan</span>
+      <span class="hero-nav hero-nav-apply">ansök</span>
+    </header>
+
+    <div class="hero-grid" id="heroGrid">
+      <article class="hero-column" data-program-index="0" data-program="form">
+        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+        <div class="fallback-media" aria-hidden="true">
+          <img class="fallback-current" alt="" />
+          <img class="fallback-next" alt="" />
+        </div>
+        <div class="column-overlay" aria-hidden="true"></div>
+        <div class="column-meta" aria-live="polite">
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-student></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-title></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-progress">
+              <span class="progress-dot" data-progress-dot="0"></span>
+              <span class="progress-dot" data-progress-dot="1"></span>
+              <span class="progress-track">
+                <span class="progress-fill" data-progress-fill></span>
+              </span>
+            </span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+        </div>
+      </article>
+
+      <article class="hero-column" data-program-index="1" data-program="mode">
+        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+        <div class="fallback-media" aria-hidden="true">
+          <img class="fallback-current" alt="" />
+          <img class="fallback-next" alt="" />
+        </div>
+        <div class="column-overlay" aria-hidden="true"></div>
+        <div class="column-meta" aria-live="polite">
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-student></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-title></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-progress">
+              <span class="progress-dot" data-progress-dot="0"></span>
+              <span class="progress-dot" data-progress-dot="1"></span>
+              <span class="progress-track">
+                <span class="progress-fill" data-progress-fill></span>
+              </span>
+            </span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+        </div>
+      </article>
+
+      <article class="hero-column" data-program-index="2" data-program="visuell kommunikation">
+        <canvas class="hero-canvas" aria-hidden="true"></canvas>
+        <div class="fallback-media" aria-hidden="true">
+          <img class="fallback-current" alt="" />
+          <img class="fallback-next" alt="" />
+        </div>
+        <div class="column-overlay" aria-hidden="true"></div>
+        <div class="column-meta" aria-live="polite">
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-student></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-text" data-meta-title></span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-row">
+            <span class="meta-cell meta-cap"></span>
+            <span class="meta-cell meta-progress">
+              <span class="progress-dot" data-progress-dot="0"></span>
+              <span class="progress-dot" data-progress-dot="1"></span>
+              <span class="progress-track">
+                <span class="progress-fill" data-progress-fill></span>
+              </span>
+            </span>
+            <span class="meta-cell meta-end"></span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="hero-cursor" id="heroCursor" aria-hidden="true">
+      <span class="cursor-bracket cursor-bracket-left"></span>
+      <span class="cursor-label">
+        <span class="cursor-program" id="cursorProgram">form</span>
+        <span class="cursor-hp">180hp</span>
+      </span>
+      <span class="cursor-bracket cursor-bracket-right"></span>
+    </div>
+
+    <noscript>
+      <style>
+        .fallback-media { display: block !important; }
+      </style>
+    </noscript>
+  </section>
+
+  <script type="module" src="./triptych-hero.js"></script>
+</body>
+</html>
