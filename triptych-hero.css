@@ -291,7 +291,7 @@ body {
   color: #fff;
   opacity: 0;
   transform: translate3d(-200px, -200px, 0) scale(0.92);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 120ms ease;
   will-change: transform, opacity;
 }
 
@@ -299,20 +299,15 @@ body {
   opacity: 1;
 }
 
-.cursor-bracket {
+.cursor-bracket-image {
   width: 18.64px;
   height: 42.848px;
-  border: 3px solid #fff;
+  display: block;
+  flex-shrink: 0;
 }
 
 .cursor-bracket-left {
-  border-right: 0;
-  border-radius: 999px 0 0 999px;
-}
-
-.cursor-bracket-right {
-  border-left: 0;
-  border-radius: 0 999px 999px 0;
+  transform: scaleX(-1);
 }
 
 .cursor-label {
@@ -323,15 +318,16 @@ body {
   line-height: 1;
   letter-spacing: -0.02em;
   white-space: nowrap;
+  font-family: "FuturaEFOP-DemiBold", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
 }
 
 .cursor-program {
-  font-size: 44px;
+  font-size: 32px;
   text-transform: lowercase;
 }
 
 .cursor-hp {
-  font-size: 28.38px;
+  font-size: 20.64px;
   text-transform: lowercase;
 }
 
@@ -349,8 +345,8 @@ body {
   .hero-nav-evening { left: calc(100vw * 0.7446); }
   .hero-nav-apply { left: calc(100vw * 0.922); }
 
-  .cursor-program { font-size: 32px; }
-  .cursor-hp { font-size: 20.64px; }
+  .cursor-program { font-size: 28px; }
+  .cursor-hp { font-size: 18px; }
 }
 
 @media (max-width: 1080px) {

@@ -31,7 +31,7 @@ const CONFIG = {
   },
   cursor: {
     enabledMinWidth: 1081,
-    lerp: 0.2,
+    lerp: 0.55,
   },
 };
 
@@ -654,9 +654,9 @@ class TriptychHero {
 
     this.columns.forEach((column, index) => {
       const program = PROGRAMS[index];
-      column.columnEl.addEventListener("pointerenter", () => {
+      column.columnEl.addEventListener("pointerenter", (event) => {
         column.setHover(true);
-        this.showCursor(program.name);
+        this.showCursor(program.name, event.clientX, event.clientY);
       });
       column.columnEl.addEventListener("pointerleave", () => {
         column.setHover(false);
@@ -670,15 +670,22 @@ class TriptychHero {
     window.addEventListener("resize", () => this.onResize());
   }
 
-  showCursor(programName) {
+  showCursor(programName, x, y) {
     if (window.innerWidth < CONFIG.cursor.enabledMinWidth) {
       return;
+    }
+    if (typeof x === "number" && typeof y === "number") {
+      this.cursorTarget.x = x;
+      this.cursorTarget.y = y;
+      this.cursorCurrent.x = x;
+      this.cursorCurrent.y = y;
     }
     this.activeProgramName = programName;
     this.cursorProgram.textContent = programName;
     this.cursorVisible = true;
     this.cursor.classList.add("is-visible");
     this.root.classList.add("is-hovering");
+    this.applyCursorTransform(1);
   }
 
   hideCursor() {
@@ -689,6 +696,10 @@ class TriptychHero {
 
   onResize() {
     this.columns.forEach((column) => column.resize());
+  }
+
+  applyCursorTransform(scale) {
+    this.cursor.style.transform = `translate3d(${this.cursorCurrent.x}px, ${this.cursorCurrent.y}px, 0) translate(-50%, -50%) scale(${scale})`;
   }
 
   updateCursor(deltaSeconds) {
@@ -709,7 +720,7 @@ class TriptychHero {
     );
 
     const visibleScale = this.cursorVisible ? 1 : 0.92;
-    this.cursor.style.transform = `translate3d(${this.cursorCurrent.x}px, ${this.cursorCurrent.y}px, 0) translate(-50%, -50%) scale(${visibleScale})`;
+    this.applyCursorTransform(visibleScale);
   }
 
   frame = (now) => {
