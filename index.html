@@ -178,15 +178,37 @@
       pointer-events: none;
     }
 
+    .hp-inner {
+      position: absolute;
+      will-change: top, left, width, height;
+      transition: top 520ms cubic-bezier(.2,.65,.2,1), left 520ms cubic-bezier(.2,.65,.2,1), width 520ms cubic-bezier(.2,.65,.2,1), height 520ms cubic-bezier(.2,.65,.2,1);
+    }
+
     .hp-text {
       position: absolute;
+      left: 27px;
+      top: 21.9px;
       margin: 0;
       font-size: 48px;
       line-height: normal;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.96px;
       white-space: nowrap;
-      will-change: top, left, font-size;
-      transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), font-size 520ms cubic-bezier(.2, .65, .2, 1), letter-spacing 520ms cubic-bezier(.2, .65, .2, 1);
+    }
+
+    .hp-bracket {
+      position: absolute;
+      top: 0;
+      display: block;
+    }
+
+    .hp-bracket.left {
+      left: 0;
+      transform: scaleX(-1);
+      transform-origin: center;
+    }
+
+    .hp-bracket.right {
+      left: 151.37px;
     }
 
     .hero.is-idle .top-nav,
@@ -278,29 +300,35 @@
       <button class="line line-vk" type="button" data-index="2" data-label="visuell kommunikation">visuell<br>kommunikation</button>
     </div>
     <div class="hp" id="hp" aria-hidden="true">
-      <span class="hp-text" id="hp-text">180hp</span>
+      <div class="hp-inner" id="hp-inner">
+        <img class="hp-bracket left" src="./assets/vectors/bracket-left.svg" alt="" />
+        <span class="hp-text">180hp</span>
+        <img class="hp-bracket right" src="./assets/vectors/bracket-right.svg" alt="" />
+      </div>
     </div>
   </section>
 
   <script>
     const DESIGN_W = 1440;
     const DESIGN_H = 800;
+    const BRACKET_W = 184;
+    const BRACKET_H = 75.796875;
 
     const states = [
       {
         image: "./assets/images/form-figma.png",
-        hpX: 364,
-        hpY: 201
+        bracketX: 394,
+        bracketY: 208.1
       },
       {
         image: "./assets/images/mode-figma.png",
-        hpX: 446,
-        hpY: 363
+        bracketX: 468,
+        bracketY: 368
       },
       {
         image: "./assets/images/vk-figma.png",
-        hpX: 1137,
-        hpY: 687
+        bracketX: 1160,
+        bracketY: 694
       }
     ];
 
@@ -310,7 +338,7 @@
     const bgB = document.getElementById("bg-b");
     const webglCanvas = document.getElementById("webgl-canvas");
     const hp = document.getElementById("hp");
-    const hpText = document.getElementById("hp-text");
+    const hpInner = document.getElementById("hp-inner");
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
 
     let current = -1;
@@ -324,10 +352,10 @@
       const scale = Math.max(hero.clientWidth / DESIGN_W, hero.clientHeight / DESIGN_H);
       const offsetX = (hero.clientWidth - DESIGN_W * scale) * 0.5;
       const offsetY = (hero.clientHeight - DESIGN_H * scale) * 0.5;
-      hpText.style.top = `${offsetY + state.hpY * scale}px`;
-      hpText.style.left = `${offsetX + state.hpX * scale}px`;
-      hpText.style.fontSize = `${48 * scale}px`;
-      hpText.style.letterSpacing = `${-0.96 * scale}px`;
+      hpInner.style.left = `${offsetX + state.bracketX * scale}px`;
+      hpInner.style.top = `${offsetY + state.bracketY * scale}px`;
+      hpInner.style.width = `${BRACKET_W * scale}px`;
+      hpInner.style.height = `${BRACKET_H * scale}px`;
     }
 
     function paintText(index) {
