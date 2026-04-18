@@ -14,7 +14,7 @@ const CONFIG = {
     durationMs: 1450,
   },
   timing: {
-    holdDurationMs: [2800, 4200],
+    autoAdvanceMs: 3000,
     initialOffsetMs: 300,
   },
   displacement: {
@@ -24,7 +24,6 @@ const CONFIG = {
   },
   hover: {
     overlayOpacity: 0.4,
-    holdMultiplier: 1.18,
     transitionSlowdown: 1.12,
     displacementBoost: 1.15,
     lerp: 0.12,
@@ -189,7 +188,6 @@ void main() {
 `;
 
 const lerp = (from, to, amount) => from + (to - from) * amount;
-const randomInRange = ([min, max]) => min + Math.random() * (max - min);
 
 function supportsWebGL() {
   try {
@@ -272,7 +270,11 @@ class ColumnHero {
     this.hoverMix = 0;
     this.isHovered = false;
     this.fallbackSwapAt = 0;
-    this.nextChangeTime = performance.now() + randomInRange(CONFIG.timing.holdDurationMs) + CONFIG.timing.initialOffsetMs * index;
+    this.studentImageOffsets = this.program.students.map(() => 0);
+    this.cycleProgress = 0;
+    this.progressFillElement = null;
+    this.stateStartedAt = performance.now();
+    this.nextChangeTime = this.stateStartedAt + CONFIG.timing.autoAdvanceMs + CONFIG.timing.initialOffsetMs * index;
   }
 
   async init() {
@@ -484,6 +486,7 @@ class ColumnHero {
         fill.className = "pagination-fill";
         track.appendChild(fill);
         row.appendChild(track);
+        this.progressFillElement = fill;
       } else {
         const dot = document.createElement("span");
         dot.className = "pagination-dot";
@@ -493,6 +496,15 @@ class ColumnHero {
 
     fragment.appendChild(row);
     this.progressMarkers.replaceChildren(fragment);
+    this.applyCycleProgress();
+  }
+
+  applyCycleProgress() {
+    if (!this.progressFillElement) {
+      return;
+    }
+    const scale = 0.333 + (0.667 * this.cycleProgress);
+    this.progressFillElement.style.transform = `scaleX(${scale})`;
   }
 
   setHover(value) {
@@ -501,8 +513,7 @@ class ColumnHero {
   }
 
   scheduleNext(now) {
-    const holdMs = randomInRange(CONFIG.timing.holdDurationMs) * (this.isHovered ? CONFIG.hover.holdMultiplier : 1);
-    this.nextChangeTime = now + holdMs;
+    this.nextChangeTime = now + CONFIG.timing.autoAdvanceMs;
   }
 
   startTransition(now) {
@@ -510,23 +521,19 @@ class ColumnHero {
       return;
     }
 
-    const currentStudent = this.currentState.student;
-    const currentSetLength = this.program.students[currentStudent]?.images.length || 1;
-    let nextStudent = currentStudent;
-    let nextImage = this.currentState.image + 1;
-    let studentChanged = false;
-
-    if (nextImage >= currentSetLength) {
-      nextStudent = (currentStudent + 1) % this.program.students.length;
-      nextImage = 0;
-      studentChanged = true;
-    }
+    const nextStudent = (this.currentState.student + 1) % this.program.students.length;
+    const nextStudentImageCount = this.program.students[nextStudent]?.images.length || 1;
+    const nextImage = this.studentImageOffsets[nextStudent] % nextStudentImageCount;
+    this.studentImageOffsets[nextStudent] += 1;
+    const studentChanged = true;
 
     this.pendingState = { student: nextStudent, image: nextImage };
     this.pendingStudentChange = studentChanged;
     this.transitioning = true;
     this.progress = 0;
     this.progressTarget = 1;
+    this.cycleProgress = 1;
+    this.applyCycleProgress();
 
     if (this.webglEnabled) {
       const currentTexture = this.getTextureForState(this.currentState);
@@ -573,6 +580,9 @@ class ColumnHero {
     }
 
     this.pendingStudentChange = false;
+    this.stateStartedAt = now;
+    this.cycleProgress = 0;
+    this.applyCycleProgress();
     this.scheduleNext(now);
   }
 
@@ -586,6 +596,12 @@ class ColumnHero {
   }
 
   update(now, deltaSeconds) {
+    if (!this.transitioning) {
+      const elapsed = now - this.stateStartedAt;
+      this.cycleProgress = Math.max(0, Math.min(1, elapsed / CONFIG.timing.autoAdvanceMs));
+      this.applyCycleProgress();
+    }
+
     if (!this.transitioning && now >= this.nextChangeTime) {
       this.startTransition(now);
     }
