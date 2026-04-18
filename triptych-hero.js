@@ -15,7 +15,10 @@ const CONFIG = {
   },
   timing: {
     autoAdvanceMs: 3000,
+    autoAdvanceJitterMs: [-900, 1100],
     initialOffsetMs: 300,
+    introInitialDelayMs: 80,
+    introStaggerMs: 140,
   },
   displacement: {
     strength: 0.12,
@@ -179,6 +182,8 @@ void main() {
 `;
 
 const lerp = (from, to, amount) => from + (to - from) * amount;
+const randomInRange = ([min, max]) => min + Math.random() * (max - min);
+const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 function supportsWebGL() {
   try {
@@ -261,6 +266,7 @@ class ColumnHero {
     this.hoverMix = 0;
     this.isHovered = false;
     this.fallbackSwapAt = 0;
+    this.isInitialized = false;
     this.nextChangeTime = performance.now() + CONFIG.timing.autoAdvanceMs + CONFIG.timing.initialOffsetMs * index;
   }
 
@@ -283,6 +289,9 @@ class ColumnHero {
       this.webglEnabled = false;
       this.columnEl.classList.add("no-webgl");
     }
+
+    this.nextChangeTime = performance.now() + this.nextIntervalMs() + (CONFIG.timing.initialOffsetMs * this.index);
+    this.isInitialized = true;
   }
 
   async initWebGL() {
@@ -387,28 +396,32 @@ class ColumnHero {
     }
 
     const gl = this.renderer.gl;
-    const sets = [];
-    for (const student of this.program.students) {
-      const set = [];
-      for (const src of student.images) {
-        try {
-          const image = await loadImage(src);
-          set.push({
-            texture: new Texture(gl, {
-              image,
-              generateMipmaps: false,
-              flipY: false,
-            }),
-            width: image.naturalWidth || image.width || 1,
-            height: image.naturalHeight || image.height || 1,
-            src,
-          });
-        } catch (error) {
-          console.warn(`Skipped image "${src}"`, error);
-        }
-      }
-      sets.push(set.length ? set : [this.whiteTexture]);
-    }
+    const sets = await Promise.all(
+      this.program.students.map(async (student) => {
+        const loaded = await Promise.all(student.images.map(async (src) => {
+          try {
+            const image = await loadImage(src);
+            return {
+              texture: new Texture(gl, {
+                image,
+                generateMipmaps: false,
+                flipY: false,
+              }),
+              width: image.naturalWidth || image.width || 1,
+              height: image.naturalHeight || image.height || 1,
+              src,
+            };
+          } catch (error) {
+            console.warn(`Skipped image "${src}"`, error);
+            return null;
+          }
+        }));
+
+        const set = loaded.filter(Boolean);
+        return set.length ? set : [this.whiteTexture];
+      }),
+    );
+
     this.textureSets = sets;
   }
 
@@ -474,7 +487,12 @@ class ColumnHero {
   }
 
   scheduleNext(now) {
-    this.nextChangeTime = now + CONFIG.timing.autoAdvanceMs;
+    this.nextChangeTime = now + this.nextIntervalMs();
+  }
+
+  nextIntervalMs() {
+    const interval = CONFIG.timing.autoAdvanceMs + randomInRange(CONFIG.timing.autoAdvanceJitterMs);
+    return Math.max(1200, interval);
   }
 
   startTransition(now) {
@@ -550,6 +568,10 @@ class ColumnHero {
   }
 
   update(now, deltaSeconds) {
+    if (!this.isInitialized) {
+      return;
+    }
+
     if (!this.transitioning && now >= this.nextChangeTime) {
       this.startTransition(now);
     }
@@ -620,10 +642,22 @@ class TriptychHero {
       new ColumnHero(columnEl, PROGRAMS[index], index, shaders, webglEnabled)
     ));
 
-    await Promise.all(this.columns.map((column) => column.init()));
+    const initPromises = this.columns.map((column) => column.init());
+    this.runIntroReveal(initPromises);
+
+    await Promise.all(initPromises);
     this.bindEvents();
     this.onResize();
     this.startLoop();
+  }
+
+  async runIntroReveal(initPromises) {
+    await sleep(CONFIG.timing.introInitialDelayMs);
+    for (let index = 0; index < this.columns.length; index += 1) {
+      await initPromises[index];
+      this.columns[index].columnEl.classList.add("is-revealed");
+      await sleep(CONFIG.timing.introStaggerMs);
+    }
   }
 
   bindEvents() {
