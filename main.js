@@ -21,16 +21,16 @@ const CONFIG = {
   ],
 
   // Displacement shader parameters
-  intensity: 0.5,        // Peak UV displacement strength
-  rgbShift: 0.004,       // Chromatic aberration amount
+  intensity: 0.35,       // Peak UV displacement strength (softer)
+  rgbShift: 0.003,       // Chromatic aberration amount
 
   // GSAP animation timing
-  duration: 1.0,         // Displacement morph duration (seconds)
-  ease: 'power2.in',     // Smooth ease-in to next image
-  revealDuration: 0.6,   // Alpha fade-in duration
-  revealEase: 'power2.in',
-  hideDuration: 0.5,     // Alpha fade-out duration
-  hideEase: 'power2.in',
+  duration: 1.4,         // Displacement morph duration (seconds)
+  ease: 'sine.inOut',    // Soft, fluid easing
+  revealDuration: 0.8,   // Alpha fade-in duration
+  revealEase: 'sine.out',
+  hideDuration: 0.6,     // Alpha fade-out duration
+  hideEase: 'sine.in',
 
   // Mouse follow
   mouseLerp: 0.06,       // Smoothing factor (lower = smoother)
@@ -296,9 +296,10 @@ class DisplacementTransition {
     if (!this.ready || index < 0 || index >= this.textures.length) return;
 
     const u = this.program.uniforms;
+    const isSwitch = this.toIndex >= 0 && this.toIndex < this.textures.length;
 
     // "From" texture: previous target or white if coming from idle
-    if (this.toIndex >= 0 && this.toIndex < this.textures.length) {
+    if (isSwitch) {
       const from = this.textures[this.toIndex];
       u.uTexture1.value = from.texture;
       u.uTex1Res.value = [from.width, from.height];
@@ -317,8 +318,11 @@ class DisplacementTransition {
     if (this.activeTween) this.activeTween.kill();
     if (this.alphaTween) this.alphaTween.kill();
 
-    // Animate displacement progress 0 → 1
+    // Reset progress and sync uniform immediately so the first rendered
+    // frame shows 100% "from" texture — prevents single-frame flash
     this.progress.value = 0;
+    u.uProgress.value = 0;
+
     this.activeTween = gsap.to(this.progress, {
       value: 1,
       duration: CONFIG.duration,
