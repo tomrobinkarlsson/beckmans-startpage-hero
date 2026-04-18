@@ -27,8 +27,8 @@ const CONFIG = {
   // GSAP animation timing
   duration: 1.2,         // Displacement morph duration (seconds)
   ease: 'power2.inOut',  // Symmetric ease: builds up then settles
-  revealDuration: 0.8,   // Alpha fade-in duration
-  revealEase: 'sine.out',
+  revealDuration: 0.4,   // Alpha fade-in duration
+  revealEase: 'power3.out',
   hideDuration: 0.6,     // Alpha fade-out duration
   hideEase: 'sine.in',
 
