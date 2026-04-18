@@ -168,18 +168,47 @@
 
     .hp {
       position: absolute;
-      left: 364px;
-      top: 201px;
-      margin: 0;
-      font-size: clamp(28px, 3.333vw, 48px);
-      line-height: normal;
-      letter-spacing: -0.02em;
+      left: 367px;
+      top: 53px;
+      width: 182px;
+      height: 58px;
       color: #fff;
       z-index: 2;
       opacity: 0;
       will-change: top, left, opacity;
       transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease;
       pointer-events: none;
+    }
+
+    .hp-text {
+      position: absolute;
+      left: 26px;
+      top: 13px;
+      margin: 0;
+      font-size: clamp(28px, 3.333vw, 48px);
+      line-height: normal;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .hp-bracket {
+      position: absolute;
+      width: 24px;
+      height: 58px;
+      top: 0;
+      display: block;
+    }
+
+    .hp-bracket.left { left: 0; transform: scaleY(-1) rotate(180deg); transform-origin: center; }
+    .hp-bracket.right { left: 158px; }
+
+    .hp-bracket path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
     }
 
     .hero.is-idle .top-nav,
@@ -222,7 +251,7 @@
       .nav-link { font-size: 14px; }
       .headline { width: calc(100% - 32px); bottom: 16px; gap: 20px; }
       .line { font-size: clamp(56px, 16vw, 140px); }
-      .hp { font-size: clamp(22px, 5vw, 38px); }
+      .hp-text { font-size: clamp(22px, 5vw, 38px); }
     }
 
     @media (max-width: 760px) {
@@ -258,7 +287,15 @@
       <button class="line" type="button" data-index="1" data-label="mode">mode</button>
       <button class="line line-vk" type="button" data-index="2" data-label="visuell kommunikation">visuell<br>kommunikation</button>
     </div>
-    <p class="hp" id="hp">180hp</p>
+    <div class="hp" id="hp" aria-hidden="true">
+      <svg class="hp-bracket left" viewBox="0 0 24 58" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19.4 2.4C9.9 8.2 9.2 49.8 19.4 55.6"/>
+      </svg>
+      <span class="hp-text">180hp</span>
+      <svg class="hp-bracket right" viewBox="0 0 24 58" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4.6 2.4C14.1 8.2 14.8 49.8 4.6 55.6"/>
+      </svg>
+    </div>
   </section>
 
   <script>
@@ -268,18 +305,18 @@
     const states = [
       {
         image: "./assets/images/form.jpg",
-        hpX: 364,
-        hpY: 201
+        hpX: 367,
+        hpY: 53
       },
       {
         image: "./assets/images/mode.jpg",
-        hpX: 446,
-        hpY: 363
+        hpX: 453,
+        hpY: 219
       },
       {
         image: "./assets/images/vk.jpg",
-        hpX: 1137,
-        hpY: 687
+        hpX: 1095,
+        hpY: 514
       }
     ];
 
@@ -475,7 +512,10 @@
           void main() {
             float p = clamp(u_progress, 0.0, 1.0);
             float e = smoothstep(0.0, 1.0, p);
-            float glitch = pow(sin(e * 3.14159265), 1.15);
+            float core = pow(sin(e * 3.14159265), 1.15);
+            float tailFade = 1.0 - smoothstep(0.78, 1.0, e);
+            float headFade = smoothstep(0.02, 0.16, e);
+            float glitch = core * tailFade * headFade;
 
             vec2 blockCount = vec2(52.0, 34.0);
             vec2 block = floor(v_uv * blockCount);
@@ -505,7 +545,7 @@
             float diff = length(toCol - fromCol);
             float motionGate = smoothstep(0.03, 0.28, diff);
             float wipeNoise = fbm(v_uv * vec2(24.0, 18.0) + vec2(u_time * 0.08, -u_time * 0.05));
-            float mixAmt = clamp(e * (0.28 + 0.72 * motionGate) + (wipeNoise - 0.5) * 0.3 * glitch, 0.0, 1.0);
+            float mixAmt = clamp(e * (0.35 + 0.65 * motionGate) + (wipeNoise - 0.5) * 0.22 * glitch, 0.0, 1.0);
             vec3 baseBlend = mix(fromCol, toCol, e);
             vec3 color = mix(fromCol, toCol, mixAmt);
 
@@ -515,14 +555,14 @@
             vec3 yccRef = rgb2ycbcr(chromaRef);
             ycc.yz = mix(ycc.yz, yccRef.yz, 0.82 * glitch);
 
-            float qY = mix(1.0 / 120.0, 1.0 / 36.0, glitch);
-            float qC = mix(1.0 / 96.0, 1.0 / 26.0, glitch);
+            float qY = mix(1.0 / 160.0, 1.0 / 52.0, glitch);
+            float qC = mix(1.0 / 132.0, 1.0 / 38.0, glitch);
             ycc.x = floor(ycc.x / qY + 0.5) * qY;
             ycc.y = floor(ycc.y / qC + 0.5) * qC;
             ycc.z = floor(ycc.z / qC + 0.5) * qC;
             color = ycbcr2rgb(ycc);
 
-            float corruptMask = step(0.982, hash(block + vec2(floor(u_time * 9.0), 3.7)));
+            float corruptMask = step(0.988, hash(block + vec2(floor(u_time * 9.0), 3.7)));
             if (corruptMask > 0.5) {
               vec2 jump = vec2(
                 hash(block + vec2(74.1, floor(u_time * 21.0))) - 0.5,
@@ -530,16 +570,16 @@
               ) * 0.5;
               vec2 corruptUv = coverUv(fract(v_uv + jump), u_from_size, u_resolution);
               vec3 corrupt = texture2D(u_from, corruptUv).bgr;
-              color = mix(color, corrupt, 0.5 * glitch);
+              color = mix(color, corrupt, 0.32 * glitch);
             }
 
-            float scan = sin(v_uv.y * u_resolution.y * 1.9) * 0.018 * (0.4 + glitch);
+            float scan = sin(v_uv.y * u_resolution.y * 1.9) * 0.012 * (0.3 + glitch);
             color -= scan;
 
             float luma = dot(color, vec3(0.299, 0.587, 0.114));
             color = mix(color, vec3(luma), 0.16 * glitch);
-            color = mix(baseBlend, color, 0.72);
-            color = max(color, vec3(0.035 * glitch));
+            color = mix(baseBlend, color, 0.58);
+            color = max(color, vec3(0.02 * glitch));
 
             gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
           }
