@@ -276,7 +276,7 @@ class DisplacementTransition {
         new Promise((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
-            const texture = new Texture(gl, { image: img, generateMipmaps: false });
+            const texture = new Texture(gl, { image: img, generateMipmaps: false, flipY: false });
             resolve({ texture, width: img.naturalWidth, height: img.naturalHeight });
           };
           img.onerror = reject;
