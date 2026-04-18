@@ -128,52 +128,49 @@ body {
   opacity: 1;
 }
 
-.hero-topbar {
+.top-nav {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
-  height: 46px;
+  top: 22.5px;
+  height: 16px;
   z-index: 20;
   color: #fff;
   pointer-events: none;
 }
 
-.hero-brand,
-.hero-nav {
+.nav-fixed {
   position: absolute;
-  top: 22.5px;
+  top: 0;
+  white-space: nowrap;
+}
+
+.brand {
   font-size: 16px;
-  line-height: 1;
+  line-height: 0.96;
   white-space: nowrap;
   text-transform: lowercase;
-  letter-spacing: -0.02em;
-}
-
-.hero-brand {
-  left: 23px;
   letter-spacing: 0;
+  left: 1.597%;
 }
 
-.hero-nav-form {
-  left: 320.58px;
+.nav-link {
+  color: inherit;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
-.hero-nav-mode {
-  left: 527.48px;
-}
-
-.hero-nav-vk {
-  left: 741.38px;
-}
-
-.hero-nav-evening {
-  left: 1072.28px;
-}
-
-.hero-nav-apply {
-  left: 1327.68px;
-}
+.nav-form { left: 22.262%; }
+.nav-mode { left: 36.631%; }
+.nav-vk { left: 51.485%; }
+.nav-evening { left: 74.464%; }
+.nav-apply { left: 92.200%; }
 
 .column-meta {
   position: absolute;
@@ -192,7 +189,7 @@ body {
 }
 
 .meta-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
 }
 
@@ -205,6 +202,7 @@ body {
 .meta-cell {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 24px;
   background: #000;
   color: #fff;
@@ -213,55 +211,50 @@ body {
 .meta-cap {
   width: 16px;
   flex: 0 0 16px;
+  border-radius: 999px 0 0 999px;
 }
 
 .meta-text {
-  padding: 0 0.05em;
+  padding: 0 4px 0 0;
   font-family: "FuturaEFOP-Book", "Courier New", monospace;
   font-size: 13px;
   font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .meta-end {
   width: 15px;
   flex: 0 0 15px;
-  position: relative;
-}
-
-.meta-end::before {
-  content: "";
-  position: absolute;
-  inset: 3px 0;
-  border-radius: 100px;
-  border: 1.5px solid #fff;
-  opacity: 0.88;
+  border-radius: 0 999px 999px 0;
 }
 
 .meta-progress {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  width: 40px;
+  justify-content: flex-start;
+  min-width: 24px;
   height: 24px;
-  padding: 0;
+  padding-right: 4px;
 }
 
-.progress-dot {
+.pagination-markers {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-dot {
   width: 4px;
   height: 4px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.3);
-  transition: background-color 260ms ease;
 }
 
-.progress-dot.is-active {
-  background: #fff;
-}
-
-.progress-track {
+.pagination-track {
+  position: relative;
   width: 24px;
   height: 4px;
   border-radius: 999px;
@@ -269,14 +262,12 @@ body {
   overflow: hidden;
 }
 
-.progress-fill {
+.pagination-fill {
   display: block;
-  width: 8px;
+  width: 10px;
   height: 100%;
   border-radius: 999px;
   background: #fff;
-  transform-origin: left center;
-  transform: scaleX(1);
 }
 
 .hero-cursor {
@@ -332,18 +323,18 @@ body {
 }
 
 @media (max-width: 1440px) {
-  .hero-brand,
-  .hero-nav {
+  .brand,
+  .nav-link {
     top: 18px;
     font-size: 13px;
   }
 
-  .hero-brand { left: 16px; }
-  .hero-nav-form { left: calc(100vw * 0.2226); }
-  .hero-nav-mode { left: calc(100vw * 0.3663); }
-  .hero-nav-vk { left: calc(100vw * 0.5148); }
-  .hero-nav-evening { left: calc(100vw * 0.7446); }
-  .hero-nav-apply { left: calc(100vw * 0.922); }
+  .brand { left: 16px; }
+  .nav-form { left: calc(100vw * 0.2226); }
+  .nav-mode { left: calc(100vw * 0.3663); }
+  .nav-vk { left: calc(100vw * 0.5148); }
+  .nav-evening { left: calc(100vw * 0.7446); }
+  .nav-apply { left: calc(100vw * 0.922); }
 
   .cursor-program { font-size: 28px; }
   .cursor-hp { font-size: 18px; }
@@ -355,20 +346,34 @@ body {
     grid-template-rows: repeat(3, minmax(0, 1fr));
   }
 
-  .hero-topbar {
+  .top-nav {
+    top: 16px;
+    left: 16px;
+    right: 16px;
     height: auto;
-    top: 0;
-    padding: 12px 16px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 12px;
+    align-items: center;
+    gap: 12px 16px;
   }
 
-  .hero-brand,
-  .hero-nav {
-    position: static;
-    top: auto;
-    left: auto;
+  .nav-fixed { position: static; }
+  .brand { font-size: 14px; }
+  .nav-link { font-size: 14px; }
+}
+
+@media (max-width: 760px) {
+  .top-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .brand {
+    font-size: 12px;
+  }
+
+  .nav-link {
     font-size: 12px;
   }
 }

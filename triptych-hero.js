@@ -31,7 +31,7 @@ const CONFIG = {
   },
   cursor: {
     enabledMinWidth: 1081,
-    lerp: 0.55,
+    lerp: 0.72,
   },
 };
 
@@ -254,8 +254,7 @@ class ColumnHero {
     this.meta = columnEl.querySelector(".column-meta");
     this.metaStudent = columnEl.querySelector("[data-meta-student]");
     this.metaTitle = columnEl.querySelector("[data-meta-title]");
-    this.progressFill = columnEl.querySelector("[data-progress-fill]");
-    this.progressDots = [...columnEl.querySelectorAll("[data-progress-dot]")];
+    this.progressMarkers = columnEl.querySelector("[data-progress-markers]");
 
     this.renderer = null;
     this.programGL = null;
@@ -464,14 +463,36 @@ class ColumnHero {
 
     this.metaStudent.textContent = student.name;
     this.metaTitle.textContent = student.title;
+    this.renderPagination(studentIndex);
+  }
+
+  renderPagination(activeIndex) {
+    if (!this.progressMarkers) {
+      return;
+    }
 
     const total = this.program.students.length;
-    const spread = total > 1 ? studentIndex / (total - 1) : 0;
-    const fillScale = 0.33 + spread * 0.67;
-    this.progressFill.style.transform = `scaleX(${fillScale})`;
-    this.progressDots.forEach((dot, idx) => {
-      dot.classList.toggle("is-active", studentIndex === idx);
-    });
+    const fragment = document.createDocumentFragment();
+    const row = document.createElement("span");
+    row.className = "pagination-markers";
+
+    for (let index = 0; index < total; index += 1) {
+      if (index === activeIndex) {
+        const track = document.createElement("span");
+        track.className = "pagination-track";
+        const fill = document.createElement("span");
+        fill.className = "pagination-fill";
+        track.appendChild(fill);
+        row.appendChild(track);
+      } else {
+        const dot = document.createElement("span");
+        dot.className = "pagination-dot";
+        row.appendChild(dot);
+      }
+    }
+
+    fragment.appendChild(row);
+    this.progressMarkers.replaceChildren(fragment);
   }
 
   setHover(value) {
