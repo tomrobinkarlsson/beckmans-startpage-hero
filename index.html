@@ -87,8 +87,6 @@
       transition: opacity 240ms ease;
     }
 
-    .hero.has-webgl .bg-layer { display: none; }
-
     .top-nav {
       position: absolute;
       top: 22px;
@@ -209,11 +207,11 @@
       opacity: 1;
     }
 
-    .hero.has-webgl:not(.is-idle) .webgl-canvas {
+    .hero.has-webgl.webgl-active:not(.is-idle) .webgl-canvas {
       opacity: 1;
     }
 
-    .hero.has-webgl:not(.is-idle) .image-dim {
+    .hero.has-webgl.webgl-active:not(.is-idle) .image-dim {
       opacity: 1;
     }
 
@@ -264,24 +262,27 @@
   </section>
 
   <script>
-    const HEADLINE_DESIGN_W = 1118.5067;
-    const HEADLINE_DESIGN_H = 610;
+    const HP_LINK_OFFSETS = [
+      { x: 8, y: 6 },
+      { x: 8, y: 6 },
+      { x: 8, y: 6 }
+    ];
 
     const states = [
       {
         image: "./assets/images/form.jpg",
-        hpHX: 348,
-        hpHY: 41
+        hpX: 364,
+        hpY: 201
       },
       {
         image: "./assets/images/mode.jpg",
-        hpHX: 430,
-        hpHY: 203
+        hpX: 446,
+        hpY: 363
       },
       {
         image: "./assets/images/vk.jpg",
-        hpHX: 1121,
-        hpHY: 527
+        hpX: 1137,
+        hpY: 687
       }
     ];
 
@@ -299,13 +300,15 @@
 
     function placeHp(index) {
       const heroRect = hero.getBoundingClientRect();
-      const headlineRect = headline.getBoundingClientRect();
-      const relX = headlineRect.left - heroRect.left;
-      const relY = headlineRect.top - heroRect.top;
-      const scaleX = headlineRect.width / HEADLINE_DESIGN_W;
-      const scaleY = headlineRect.height / HEADLINE_DESIGN_H;
-      const pxLeft = Math.round(relX + states[index].hpHX * scaleX);
-      const pxTop = Math.round(relY + states[index].hpHY * scaleY);
+      const linkRect = textLinks[index].getBoundingClientRect();
+      const fallbackLeft = Math.round((hero.clientWidth * states[index].hpX) / 1440);
+      const fallbackTop = Math.round((hero.clientHeight * states[index].hpY) / 800);
+      const pxLeft = Number.isFinite(linkRect.right)
+        ? Math.round(linkRect.right - heroRect.left + HP_LINK_OFFSETS[index].x)
+        : fallbackLeft;
+      const pxTop = Number.isFinite(linkRect.top)
+        ? Math.round(linkRect.top - heroRect.top + HP_LINK_OFFSETS[index].y)
+        : fallbackTop;
       hp.style.top = `${pxTop}px`;
       hp.style.left = `${pxLeft}px`;
     }
@@ -713,10 +716,10 @@
       current = index;
       hero.classList.remove("is-idle");
       paintText(current);
+      paintBackgroundFallback(current);
       if (webglEnabled) {
+        hero.classList.add("webgl-active");
         webglMorph.setTarget(current);
-      } else {
-        paintBackgroundFallback(current);
       }
     }
 
@@ -725,6 +728,7 @@
       hero.classList.add("is-idle");
       textLinks.forEach((line) => line.classList.remove("is-active"));
       if (webglEnabled) {
+        hero.classList.remove("webgl-active");
         webglMorph.setIdle();
       } else {
         bgA.classList.remove("is-visible");
@@ -754,8 +758,6 @@
         if (!ok) return;
         webglEnabled = true;
         hero.classList.add("has-webgl");
-        bgA.classList.remove("is-visible");
-        bgB.classList.remove("is-visible");
         if (current >= 0) webglMorph.setTarget(current);
       });
     }
