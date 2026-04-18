@@ -74,7 +74,6 @@
       display: block;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 120ms linear;
     }
 
     .image-dim {
@@ -84,7 +83,6 @@
       pointer-events: none;
       background: rgba(0, 0, 0, 0.5);
       opacity: 0;
-      transition: opacity 120ms linear;
     }
 
     .top-nav {
@@ -191,17 +189,6 @@
       transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), font-size 520ms cubic-bezier(.2, .65, .2, 1), letter-spacing 520ms cubic-bezier(.2, .65, .2, 1);
     }
 
-    .hp-bracket {
-      position: absolute;
-      width: 25.976px;
-      height: 60.846px;
-      display: block;
-      will-change: top, left, width, height;
-      transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), width 520ms cubic-bezier(.2, .65, .2, 1), height 520ms cubic-bezier(.2, .65, .2, 1);
-    }
-
-    .hp-bracket.left { transform: scaleY(-1) rotate(180deg); transform-origin: center; }
-
     .hero.is-idle .top-nav,
     .hero.is-idle .brand,
     .hero.is-idle .nav-link {
@@ -291,58 +278,29 @@
       <button class="line line-vk" type="button" data-index="2" data-label="visuell kommunikation">visuell<br>kommunikation</button>
     </div>
     <div class="hp" id="hp" aria-hidden="true">
-      <img class="hp-bracket left" id="hp-bracket-left" src="./assets/vectors/hp-form-left.svg" alt="" />
       <span class="hp-text" id="hp-text">180hp</span>
-      <img class="hp-bracket right" id="hp-bracket-right" src="./assets/vectors/hp-form-right.svg" alt="" />
     </div>
   </section>
 
   <script>
     const DESIGN_W = 1440;
     const DESIGN_H = 800;
-    const HP_TEXT_OPTICAL_Y = 4;
-    const HP_BRACKET_OPTICAL_Y = 8;
-    const HP_LEFT_BRACKET_MARGIN_FIX = 9;
 
     const states = [
       {
         image: "./assets/images/form-figma.png",
-        hp: {
-          textX: 409,
-          textY: 226,
-          leftX: 407.4755859375,
-          leftY: 211.5771484375,
-          rightX: 540.5244140625,
-          rightY: 211.5771484375,
-          leftAsset: "./assets/vectors/hp-form-left.svg",
-          rightAsset: "./assets/vectors/hp-form-right.svg"
-        }
+        hpX: 364,
+        hpY: 201
       },
       {
         image: "./assets/images/mode-figma.png",
-        hp: {
-          textX: 479,
-          textY: 232,
-          leftX: 477.4755859375,
-          leftY: 217.5771484375,
-          rightX: 610.5244140625,
-          rightY: 217.5771484375,
-          leftAsset: "./assets/vectors/hp-mode-left.svg",
-          rightAsset: "./assets/vectors/hp-mode-right.svg"
-        }
+        hpX: 446,
+        hpY: 363
       },
       {
         image: "./assets/images/vk-figma.png",
-        hp: {
-          textX: 1181,
-          textY: 715,
-          leftX: 1179.4755859375,
-          leftY: 700.5771484375,
-          rightX: 1312.5244140625,
-          rightY: 700.5771484375,
-          leftAsset: "./assets/vectors/hp-vk-left.svg",
-          rightAsset: "./assets/vectors/hp-vk-right.svg"
-        }
+        hpX: 1137,
+        hpY: 687
       }
     ];
 
@@ -353,8 +311,6 @@
     const webglCanvas = document.getElementById("webgl-canvas");
     const hp = document.getElementById("hp");
     const hpText = document.getElementById("hp-text");
-    const hpBracketLeft = document.getElementById("hp-bracket-left");
-    const hpBracketRight = document.getElementById("hp-bracket-right");
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
 
     let current = -1;
@@ -368,22 +324,10 @@
       const scale = Math.max(hero.clientWidth / DESIGN_W, hero.clientHeight / DESIGN_H);
       const offsetX = (hero.clientWidth - DESIGN_W * scale) * 0.5;
       const offsetY = (hero.clientHeight - DESIGN_H * scale) * 0.5;
-      const bracketW = 25.9755859375 * scale;
-      const bracketH = 60.845703125 * scale;
-      hpText.style.top = `${offsetY + (state.hp.textY + HP_TEXT_OPTICAL_Y) * scale}px`;
-      hpText.style.left = `${offsetX + state.hp.textX * scale}px`;
+      hpText.style.top = `${offsetY + state.hpY * scale}px`;
+      hpText.style.left = `${offsetX + state.hpX * scale}px`;
       hpText.style.fontSize = `${48 * scale}px`;
       hpText.style.letterSpacing = `${-0.96 * scale}px`;
-      hpBracketLeft.style.top = `${offsetY + (state.hp.leftY + HP_BRACKET_OPTICAL_Y) * scale}px`;
-      hpBracketLeft.style.left = `${offsetX + (state.hp.leftX - HP_LEFT_BRACKET_MARGIN_FIX) * scale}px`;
-      hpBracketLeft.style.width = `${bracketW}px`;
-      hpBracketLeft.style.height = `${bracketH}px`;
-      hpBracketRight.style.top = `${offsetY + (state.hp.rightY + HP_BRACKET_OPTICAL_Y) * scale}px`;
-      hpBracketRight.style.left = `${offsetX + state.hp.rightX * scale}px`;
-      hpBracketRight.style.width = `${bracketW}px`;
-      hpBracketRight.style.height = `${bracketH}px`;
-      hpBracketLeft.src = state.hp.leftAsset;
-      hpBracketRight.src = state.hp.rightAsset;
     }
 
     function paintText(index) {
