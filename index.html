@@ -43,8 +43,7 @@
       position: absolute;
       inset: 0;
       opacity: 0;
-      transition: opacity 620ms cubic-bezier(.2, .65, .2, 1);
-      will-change: opacity;
+      will-change: opacity, transform, filter, clip-path;
     }
 
     .bg-layer.is-visible { opacity: 1; }
@@ -63,6 +62,35 @@
       inset: 0;
       background: rgba(0, 0, 0, 0.5);
       transition: background-color 280ms ease;
+    }
+
+    .bg-layer.is-revealing {
+      animation: layerReveal 760ms cubic-bezier(.22, .77, .17, 1) both;
+      z-index: 1;
+    }
+
+    .bg-layer.is-exiting {
+      animation: layerExit 760ms cubic-bezier(.22, .77, .17, 1) both;
+      z-index: 0;
+    }
+
+    .transition-flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 1;
+      background: radial-gradient(
+        circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.13) 14%,
+        rgba(255, 255, 255, 0) 48%
+      );
+      mix-blend-mode: screen;
+    }
+
+    .hero.is-transitioning .transition-flash {
+      animation: flashPulse 760ms cubic-bezier(.22, .77, .17, 1);
     }
 
     .top-nav {
@@ -185,6 +213,43 @@
       opacity: 1;
     }
 
+    @keyframes layerReveal {
+      0% {
+        opacity: 0;
+        clip-path: circle(0% at var(--reveal-x, 50%) var(--reveal-y, 50%));
+        transform: scale(1.14);
+        filter: blur(18px) saturate(1.25);
+      }
+      48% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 1;
+        clip-path: circle(165% at var(--reveal-x, 50%) var(--reveal-y, 50%));
+        transform: scale(1);
+        filter: blur(0) saturate(1);
+      }
+    }
+
+    @keyframes layerExit {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0) saturate(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.08);
+        filter: blur(10px) saturate(0.92);
+      }
+    }
+
+    @keyframes flashPulse {
+      0% { opacity: 0; }
+      20% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
     @media (max-width: 1050px) {
       .top-nav { flex-direction: column; align-items: flex-start; gap: 12px; }
       .menu { gap: 16px; flex-wrap: wrap; }
@@ -209,6 +274,7 @@
   <section class="hero is-idle" aria-label="Beckmans hero states">
     <div class="bg-layer" id="bg-a"><img alt="" /></div>
     <div class="bg-layer" id="bg-b"><img alt="" /></div>
+    <div class="transition-flash" aria-hidden="true"></div>
 
     <nav class="top-nav">
       <span class="brand">beckmans designhögskola</span>
@@ -257,9 +323,33 @@
     const bgB = document.getElementById("bg-b");
     const hp = document.getElementById("hp");
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
+    const bgLayers = [bgA, bgB];
 
     let current = -1;
     let showA = true;
+    let flashTimer = null;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getRevealPoint(triggerEl, evt) {
+      const heroRect = hero.getBoundingClientRect();
+      let x;
+      let y;
+      if (evt && typeof evt.clientX === "number" && typeof evt.clientY === "number") {
+        x = ((evt.clientX - heroRect.left) / heroRect.width) * 100;
+        y = ((evt.clientY - heroRect.top) / heroRect.height) * 100;
+      } else {
+        const rect = triggerEl.getBoundingClientRect();
+        x = ((rect.left + rect.width / 2 - heroRect.left) / heroRect.width) * 100;
+        y = ((rect.top + rect.height / 2 - heroRect.top) / heroRect.height) * 100;
+      }
+      return {
+        x: clamp(x, 0, 100),
+        y: clamp(y, 0, 100)
+      };
+    }
 
     function placeHp(index) {
       const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
@@ -273,39 +363,75 @@
       placeHp(index);
     }
 
-    function paintBackground(index) {
+    function paintBackground(index, revealPoint) {
       const nextLayer = showA ? bgB : bgA;
       const prevLayer = showA ? bgA : bgB;
       const img = nextLayer.querySelector("img");
       img.src = states[index].image;
       img.alt = `Beckmans ${textLinks[index].dataset.label}`;
-      nextLayer.classList.add("is-visible");
+
+      const revealX = `${revealPoint.x}%`;
+      const revealY = `${revealPoint.y}%`;
+      hero.style.setProperty("--reveal-x", revealX);
+      hero.style.setProperty("--reveal-y", revealY);
+      nextLayer.style.setProperty("--reveal-x", revealX);
+      nextLayer.style.setProperty("--reveal-y", revealY);
+      prevLayer.style.setProperty("--reveal-x", revealX);
+      prevLayer.style.setProperty("--reveal-y", revealY);
+
+      nextLayer.classList.remove("is-exiting", "is-revealing");
+      prevLayer.classList.remove("is-revealing");
+      void nextLayer.offsetWidth;
+      nextLayer.classList.add("is-visible", "is-revealing");
       prevLayer.classList.remove("is-visible");
+      prevLayer.classList.add("is-exiting");
+
+      hero.classList.add("is-transitioning");
+      if (flashTimer) window.clearTimeout(flashTimer);
+      flashTimer = window.setTimeout(() => {
+        hero.classList.remove("is-transitioning");
+      }, 780);
+
       showA = !showA;
     }
 
-    function setState(index) {
+    function setState(index, triggerEl, evt) {
       if (index === current) return;
       current = index;
       hero.classList.remove("is-idle");
       paintText(current);
-      paintBackground(current);
+      paintBackground(current, getRevealPoint(triggerEl, evt));
     }
 
     function setIdle() {
       current = -1;
       hero.classList.add("is-idle");
+      hero.classList.remove("is-transitioning");
+      if (flashTimer) {
+        window.clearTimeout(flashTimer);
+        flashTimer = null;
+      }
       textLinks.forEach((line) => line.classList.remove("is-active"));
-      bgA.classList.remove("is-visible");
-      bgB.classList.remove("is-visible");
+      bgLayers.forEach((layer) => layer.classList.remove("is-visible", "is-revealing", "is-exiting"));
+    }
+
+    function handleLayerAnimationEnd(evt) {
+      const layer = evt.currentTarget;
+      if (evt.animationName === "layerReveal") {
+        layer.classList.remove("is-revealing");
+      }
+      if (evt.animationName === "layerExit") {
+        layer.classList.remove("is-exiting");
+      }
     }
 
     function init() {
       setIdle();
+      bgLayers.forEach((layer) => layer.addEventListener("animationend", handleLayerAnimationEnd));
       textLinks.forEach((link, index) => {
-        link.addEventListener("mouseenter", () => setState(index));
-        link.addEventListener("focus", () => setState(index));
-        link.addEventListener("click", () => setState(index));
+        link.addEventListener("mouseenter", (evt) => setState(index, link, evt));
+        link.addEventListener("focus", (evt) => setState(index, link, evt));
+        link.addEventListener("click", (evt) => setState(index, link, evt));
         link.addEventListener("blur", () => {
           window.setTimeout(() => {
             if (!headline.contains(document.activeElement)) setIdle();
