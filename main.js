@@ -214,7 +214,6 @@ class DisplacementTransition {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT,
       generateMipmaps: false,
-      flipY: false,
     });
 
     // 1x1 white texture for idle → image transitions
@@ -224,7 +223,7 @@ class DisplacementTransition {
     wctx.fillStyle = '#fff';
     wctx.fillRect(0, 0, 1, 1);
     this.whiteTexture = {
-      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false, flipY: false }),
+      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false }),
       width: 1,
       height: 1,
     };
@@ -250,10 +249,16 @@ class DisplacementTransition {
       transparent: true,
     });
 
-    // Fullscreen triangle (single triangle covers the viewport)
+    // Fullscreen quad (two triangles, UVs strictly 0–1)
     const geometry = new Geometry(gl, {
-      position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
-      uv:       { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) },
+      position: { size: 2, data: new Float32Array([
+        -1, -1,   1, -1,   1,  1,
+        -1, -1,   1,  1,  -1,  1,
+      ])},
+      uv: { size: 2, data: new Float32Array([
+         0,  0,   1,  0,   1,  1,
+         0,  0,   1,  1,   0,  1,
+      ])},
     });
 
     this.mesh = new Mesh(gl, { geometry, program: this.program });
@@ -271,7 +276,7 @@ class DisplacementTransition {
         new Promise((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
-            const texture = new Texture(gl, { image: img, generateMipmaps: false, flipY: false });
+            const texture = new Texture(gl, { image: img, generateMipmaps: false });
             resolve({ texture, width: img.naturalWidth, height: img.naturalHeight });
           };
           img.onerror = reject;
