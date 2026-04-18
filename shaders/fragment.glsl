@@ -32,8 +32,8 @@ void main() {
     // Sample displacement map (grayscale Perlin noise)
     float disp = texture2D(uDisplacement, vUv).r;
 
-    // Displacement strength peaks at mid-transition via sine curve
-    float strength = uIntensity * sin(uProgress * 3.14159265);
+    // Displacement strength decreases as transition progresses
+    float strength = uIntensity * (1.0 - uProgress);
 
     // Subtle mouse-driven offset for organic feel
     vec2 mouseOff = (uMouse - 0.5) * 0.015 * strength;

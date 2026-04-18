@@ -74,7 +74,7 @@ vec2 coverUV(vec2 uv, vec2 t, vec2 s) {
 }
 void main() {
     float disp = texture2D(uDisplacement, vUv).r;
-    float strength = uIntensity * sin(uProgress * 3.14159265);
+    float strength = uIntensity * (1.0 - uProgress);
     vec2 mouseOff = (uMouse - 0.5) * 0.015 * strength;
     vec2 dir = vec2(0.8, 0.2);
     vec2 d1 = vUv + dir * disp * strength + mouseOff;
