@@ -80,7 +80,9 @@ void main() {
     vec2 d1 = vUv + dir * disp * strength + mouseOff;
     vec2 d2 = vUv - dir * (1.0 - disp) * strength - mouseOff;
     vec2 uv1 = coverUV(d1, uTex1Res, uResolution);
+    uv1.y = 1.0 - uv1.y;
     vec2 uv2 = coverUV(d2, uTex2Res, uResolution);
+    uv2.y = 1.0 - uv2.y;
     float ca = uRgbShift * strength;
     vec3 c1 = vec3(texture2D(uTexture1,uv1+vec2(ca,0)).r, texture2D(uTexture1,uv1).g, texture2D(uTexture1,uv1-vec2(ca,0)).b);
     vec3 c2 = vec3(texture2D(uTexture2,uv2+vec2(ca,0)).r, texture2D(uTexture2,uv2).g, texture2D(uTexture2,uv2-vec2(ca,0)).b);
@@ -214,6 +216,7 @@ class DisplacementTransition {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT,
       generateMipmaps: false,
+      flipY: false,
     });
 
     // 1x1 white texture for idle → image transitions
@@ -223,7 +226,7 @@ class DisplacementTransition {
     wctx.fillStyle = '#fff';
     wctx.fillRect(0, 0, 1, 1);
     this.whiteTexture = {
-      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false }),
+      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false, flipY: false }),
       width: 1,
       height: 1,
     };

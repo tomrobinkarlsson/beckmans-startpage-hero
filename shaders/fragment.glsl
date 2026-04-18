@@ -45,9 +45,11 @@ void main() {
     vec2 d1 = vUv + dir * disp * strength + mouseOff;
     vec2 d2 = vUv - dir * (1.0 - disp) * strength - mouseOff;
 
-    // Map displaced UVs to cover-fit texture space
+    // Map displaced UVs to cover-fit texture space, flip Y for correct orientation
     vec2 uv1 = coverUV(d1, uTex1Res, uResolution);
+    uv1.y = 1.0 - uv1.y;
     vec2 uv2 = coverUV(d2, uTex2Res, uResolution);
+    uv2.y = 1.0 - uv2.y;
 
     // Chromatic aberration scaled to displacement strength
     float ca = uRgbShift * strength;
