@@ -180,37 +180,32 @@
 
     .hp-inner {
       position: absolute;
-      will-change: top, left, width, height;
-      transition: top 520ms cubic-bezier(.2,.65,.2,1), left 520ms cubic-bezier(.2,.65,.2,1), width 520ms cubic-bezier(.2,.65,.2,1), height 520ms cubic-bezier(.2,.65,.2,1);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      will-change: top, left;
+      transition: top 520ms cubic-bezier(.2,.65,.2,1), left 520ms cubic-bezier(.2,.65,.2,1);
     }
 
     .hp-text {
-      position: absolute;
-      left: 27px;
-      top: 21.9px;
       margin: 0;
       font-size: 48px;
-      line-height: normal;
+      line-height: 1;
       letter-spacing: -0.96px;
       white-space: nowrap;
+      padding: 0 4px;
     }
 
     .hp-bracket {
-      position: absolute;
-      top: 0;
       width: 32.63px;
       height: 75.8px;
       display: block;
+      flex-shrink: 0;
     }
 
     .hp-bracket.left {
-      left: 0;
       transform: scaleX(-1);
       transform-origin: center;
-    }
-
-    .hp-bracket.right {
-      right: 0;
     }
 
     .hero.is-idle .top-nav,
@@ -311,27 +306,12 @@
   </section>
 
   <script>
-    const DESIGN_W = 1440;
-    const DESIGN_H = 800;
-    const BRACKET_W = 184;
-    const BRACKET_H = 75.796875;
+    const HP_GAP = 40;
 
     const states = [
-      {
-        image: "./assets/images/form-figma.png",
-        bracketX: 394,
-        bracketY: 208.1
-      },
-      {
-        image: "./assets/images/mode-figma.png",
-        bracketX: 468,
-        bracketY: 368
-      },
-      {
-        image: "./assets/images/vk-figma.png",
-        bracketX: 1160,
-        bracketY: 694
-      }
+      { image: "./assets/images/form-figma.png" },
+      { image: "./assets/images/mode-figma.png" },
+      { image: "./assets/images/vk-figma.png" }
     ];
 
     const hero = document.querySelector(".hero");
@@ -350,14 +330,14 @@
     const fallbackCache = new Map();
 
     function placeHp(index) {
-      const state = states[index];
-      const scale = Math.max(hero.clientWidth / DESIGN_W, hero.clientHeight / DESIGN_H);
-      const offsetX = (hero.clientWidth - DESIGN_W * scale) * 0.5;
-      const offsetY = (hero.clientHeight - DESIGN_H * scale) * 0.5;
-      hpInner.style.left = `${offsetX + state.bracketX * scale}px`;
-      hpInner.style.top = `${offsetY + state.bracketY * scale}px`;
-      hpInner.style.width = `${BRACKET_W * scale}px`;
-      hpInner.style.height = `${BRACKET_H * scale}px`;
+      const link = textLinks[index];
+      const heroRect = hero.getBoundingClientRect();
+      const linkRect = link.getBoundingClientRect();
+      const hpH = hpInner.offsetHeight;
+      const linkBottom = linkRect.bottom - heroRect.top;
+      const linkRight = linkRect.right - heroRect.left;
+      hpInner.style.left = `${linkRight + HP_GAP}px`;
+      hpInner.style.top = `${linkBottom - hpH}px`;
     }
 
     function paintText(index) {
