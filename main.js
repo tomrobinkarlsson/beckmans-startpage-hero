@@ -47,7 +47,7 @@ const VERTEX_FALLBACK = `attribute vec2 position;
 attribute vec2 uv;
 varying vec2 vUv;
 void main() {
-    vUv = vec2(uv.x, 1.0 - uv.y);
+    vUv = uv;
     gl_Position = vec4(position, 0.0, 1.0);
 }`;
 
@@ -214,6 +214,7 @@ class DisplacementTransition {
       wrapS: gl.REPEAT,
       wrapT: gl.REPEAT,
       generateMipmaps: false,
+      flipY: false,
     });
 
     // 1x1 white texture for idle → image transitions
@@ -223,7 +224,7 @@ class DisplacementTransition {
     wctx.fillStyle = '#fff';
     wctx.fillRect(0, 0, 1, 1);
     this.whiteTexture = {
-      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false }),
+      texture: new Texture(gl, { image: whiteCanvas, generateMipmaps: false, flipY: false }),
       width: 1,
       height: 1,
     };
@@ -270,7 +271,7 @@ class DisplacementTransition {
         new Promise((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
-            const texture = new Texture(gl, { image: img, generateMipmaps: false });
+            const texture = new Texture(gl, { image: img, generateMipmaps: false, flipY: false });
             resolve({ texture, width: img.naturalWidth, height: img.naturalHeight });
           };
           img.onerror = reject;
