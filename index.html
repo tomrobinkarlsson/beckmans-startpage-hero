@@ -292,12 +292,16 @@
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
 
     let current = -1;
-    let showA = true;
     let webglEnabled = false;
+    let fallbackIndex = -1;
+    const fallbackLayer = bgA;
 
     function placeHp(index) {
-      const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
-      const pxLeft = Math.round((hero.clientWidth * states[index].hpX) / DESIGN_W);
+      const scale = Math.max(hero.clientWidth / DESIGN_W, hero.clientHeight / DESIGN_H);
+      const offsetX = (hero.clientWidth - DESIGN_W * scale) * 0.5;
+      const offsetY = (hero.clientHeight - DESIGN_H * scale) * 0.5;
+      const pxTop = Math.round(offsetY + states[index].hpY * scale);
+      const pxLeft = Math.round(offsetX + states[index].hpX * scale);
       hp.style.top = `${pxTop}px`;
       hp.style.left = `${pxLeft}px`;
     }
@@ -307,15 +311,24 @@
       placeHp(index);
     }
 
-    function paintBackgroundFallback(index) {
-      const nextLayer = showA ? bgB : bgA;
-      const prevLayer = showA ? bgA : bgB;
-      const img = nextLayer.querySelector("img");
-      img.src = states[index].image;
-      img.alt = `Beckmans ${textLinks[index].dataset.label}`;
-      nextLayer.classList.add("is-visible");
-      prevLayer.classList.remove("is-visible");
-      showA = !showA;
+    function setFallbackImage(index) {
+      if (fallbackIndex === index) return;
+      const img = fallbackLayer.querySelector("img");
+      const src = states[index].image;
+      const preload = new Image();
+      preload.decoding = "async";
+      preload.onload = () => {
+        img.src = src;
+        img.alt = `Beckmans ${textLinks[index].dataset.label}`;
+        fallbackIndex = index;
+      };
+      preload.src = src;
+    }
+
+    function showFallback(index) {
+      setFallbackImage(index);
+      fallbackLayer.classList.add("is-visible");
+      bgB.classList.remove("is-visible");
     }
 
     function createShader(gl, type, source) {
@@ -714,7 +727,7 @@
       current = index;
       hero.classList.remove("is-idle");
       paintText(current);
-      paintBackgroundFallback(current);
+      showFallback(current);
       if (webglEnabled) {
         hero.classList.add("webgl-active");
         webglMorph.setTarget(current);
@@ -725,16 +738,18 @@
       current = -1;
       hero.classList.add("is-idle");
       textLinks.forEach((line) => line.classList.remove("is-active"));
+      fallbackLayer.classList.remove("is-visible");
+      bgB.classList.remove("is-visible");
       if (webglEnabled) {
         hero.classList.remove("webgl-active");
         webglMorph.setIdle();
-      } else {
-        bgA.classList.remove("is-visible");
-        bgB.classList.remove("is-visible");
       }
     }
 
     function init() {
+      bgB.classList.remove("is-visible");
+      showFallback(0);
+      fallbackLayer.classList.remove("is-visible");
       setIdle();
       textLinks.forEach((link, index) => {
         link.addEventListener("mouseenter", () => setState(index));
@@ -758,6 +773,7 @@
         hero.classList.add("has-webgl");
         webglMorph.onSettle = () => {
           hero.classList.remove("webgl-active");
+          if (current >= 0) showFallback(current);
         };
         if (current >= 0) webglMorph.setTarget(current);
       });
