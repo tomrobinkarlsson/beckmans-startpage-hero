@@ -350,20 +350,16 @@ class DisplacementTransition {
     this.targetMouse = [x, y];
   }
 
-  // Sync canvas buffer to CSS layout without overriding CSS dimensions
+  // Sync canvas buffer to CSS layout
   resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
-    const bw = Math.round(w * dpr);
-    const bh = Math.round(h * dpr);
-    if (this.canvas.width !== bw || this.canvas.height !== bh) {
-      this.canvas.width = bw;
-      this.canvas.height = bh;
-    }
-    this.renderer.gl.viewport(0, 0, bw, bh);
+    this.renderer.setSize(w, h);
+    // Restore CSS so inset:0 controls layout, not OGL's inline styles
+    this.canvas.style.width = '';
+    this.canvas.style.height = '';
     if (this.program) {
-      this.program.uniforms.uResolution.value = [bw, bh];
+      this.program.uniforms.uResolution.value = [this.canvas.width, this.canvas.height];
     }
   }
 
