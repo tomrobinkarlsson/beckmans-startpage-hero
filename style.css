@@ -1,0 +1,283 @@
+@font-face {
+  font-family: "FuturaEFOP-DemiBold";
+  src: url("./assets/fonts/FuturaEFOP-DemiBold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "FuturaEFOP-Book";
+  src: url("./assets/fonts/FuturaEFOP-Book.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: #fff;
+  color: #000;
+  font-family: "FuturaEFOP-DemiBold", "Avenir Next", "Avenir", "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* ─── Hero container ─── */
+
+.hero {
+  width: 100vw;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* ─── Fallback bg-layers (hidden when WebGL active) ─── */
+
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 420ms ease;
+  will-change: opacity;
+}
+
+.bg-layer.is-visible { opacity: 1; }
+
+.bg-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.bg-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  transition: background-color 280ms ease;
+}
+
+.hero.has-webgl .bg-layer,
+.hero.has-webgl .image-dim {
+  display: none;
+}
+
+/* ─── WebGL canvas ─── */
+
+.webgl-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* ─── Image dim overlay (fallback only) ─── */
+
+.image-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+}
+
+/* ─── Navigation ─── */
+
+.top-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22.5px;
+  height: 16px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.nav-fixed {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.brand {
+  font-size: 16px;
+  line-height: 0.96;
+  white-space: nowrap;
+  text-transform: lowercase;
+  transition: color 260ms ease;
+  left: 1.597%;
+}
+
+.nav-link {
+  color: inherit;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 260ms ease;
+  white-space: nowrap;
+}
+
+.nav-form { left: 22.262%; }
+.nav-mode { left: 36.631%; }
+.nav-vk { left: 51.485%; }
+.nav-evening { left: 74.464%; }
+.nav-apply { left: 92.200%; }
+
+/* ─── Headline links ─── */
+
+.headline {
+  position: absolute;
+  left: 16px;
+  bottom: 30px;
+  width: min(1118.507px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  text-transform: lowercase;
+  z-index: 2;
+  user-select: none;
+}
+
+.line {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  font-size: clamp(66px, 12.6815vw, 182.613px);
+  line-height: 0.84;
+  letter-spacing: -0.04em;
+  color: #000;
+  opacity: 1;
+  width: fit-content;
+  cursor: pointer;
+  transition: opacity 320ms ease, color 280ms ease;
+}
+
+.line.is-active {
+  opacity: 1;
+}
+
+.line.line-vk {
+  line-height: 0.9;
+}
+
+/* ─── 180hp bracket element ─── */
+
+.hp {
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.hp-inner {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  will-change: top, left;
+  transition: top 520ms cubic-bezier(.2,.65,.2,1), left 520ms cubic-bezier(.2,.65,.2,1);
+}
+
+.hp-text {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -0.96px;
+  white-space: nowrap;
+  padding: 0 4px;
+  position: relative;
+  top: -12px;
+}
+
+.hp-bracket {
+  width: 32.63px;
+  height: 75.8px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.hp-bracket.left {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
+/* ─── State-dependent colors ─── */
+
+.hero.is-idle .top-nav,
+.hero.is-idle .brand,
+.hero.is-idle .nav-link {
+  color: #000;
+}
+
+.hero:not(.is-idle) .top-nav,
+.hero:not(.is-idle) .brand,
+.hero:not(.is-idle) .nav-link {
+  color: #fff;
+}
+
+.hero:not(.is-idle) .line {
+  color: #fff;
+  opacity: 0.5;
+}
+
+.hero:not(.is-idle) .line.is-active {
+  opacity: 1;
+}
+
+.hero:not(.is-idle) .hp {
+  opacity: 1;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1050px) {
+  .top-nav {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+  }
+  .nav-fixed { position: static; }
+  .brand { font-size: 14px; }
+  .nav-link { font-size: 14px; }
+  .headline { width: calc(100% - 32px); bottom: 16px; gap: 20px; }
+  .line { font-size: clamp(56px, 16vw, 140px); }
+  .hp-text { font-size: clamp(22px, 5vw, 38px); }
+}
+
+@media (max-width: 760px) {
+  .top-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .brand { font-size: 14px; }
+  .nav-link { font-size: 14px; }
+  .headline { gap: 10px; }
+  .line { font-size: clamp(46px, 14vw, 96px); }
+}
