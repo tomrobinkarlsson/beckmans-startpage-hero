@@ -74,7 +74,7 @@
       display: block;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 240ms ease;
+      transition: opacity 120ms linear;
     }
 
     .image-dim {
@@ -84,20 +84,23 @@
       pointer-events: none;
       background: rgba(0, 0, 0, 0.5);
       opacity: 0;
-      transition: opacity 240ms ease;
+      transition: opacity 120ms linear;
     }
 
     .top-nav {
       position: absolute;
-      top: 22px;
-      left: 23px;
-      right: 23px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
+      left: 0;
+      right: 0;
+      top: 22.5px;
+      height: 16px;
       z-index: 3;
       pointer-events: none;
+    }
+
+    .nav-fixed {
+      position: absolute;
+      top: 0;
+      white-space: nowrap;
     }
 
     .brand {
@@ -106,12 +109,7 @@
       white-space: nowrap;
       text-transform: lowercase;
       transition: color 260ms ease;
-    }
-
-    .menu {
-      display: inline-flex;
-      align-items: center;
-      gap: clamp(20px, 3vw, 46px);
+      left: calc(max(0px, (100vw - 1440px) * 0.5) + 23px);
     }
 
     .nav-link {
@@ -126,6 +124,12 @@
       transition: color 260ms ease;
       white-space: nowrap;
     }
+
+    .nav-form { left: calc(max(0px, (100vw - 1440px) * 0.5) + 320.580078125px); }
+    .nav-mode { left: calc(max(0px, (100vw - 1440px) * 0.5) + 527.478515625px); }
+    .nav-vk { left: calc(max(0px, (100vw - 1440px) * 0.5) + 741.37890625px); }
+    .nav-evening { left: calc(max(0px, (100vw - 1440px) * 0.5) + 1072.279296875px); }
+    .nav-apply { left: calc(max(0px, (100vw - 1440px) * 0.5) + 1327.6796875px); }
 
     .headline {
       position: absolute;
@@ -232,8 +236,19 @@
     }
 
     @media (max-width: 1050px) {
-      .top-nav { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .menu { gap: 16px; flex-wrap: wrap; }
+      .top-nav {
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        height: auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 16px;
+      }
+      .nav-fixed {
+        position: static;
+      }
       .brand { font-size: 14px; }
       .nav-link { font-size: 14px; }
       .headline { width: calc(100% - 32px); bottom: 16px; gap: 20px; }
@@ -242,8 +257,11 @@
     }
 
     @media (max-width: 760px) {
-      .top-nav { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .menu { gap: 16px; flex-wrap: wrap; }
+      .top-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
       .brand { font-size: 14px; }
       .nav-link { font-size: 14px; }
       .headline { gap: 10px; }
@@ -259,14 +277,12 @@
     <div class="image-dim" aria-hidden="true"></div>
 
     <nav class="top-nav">
-      <span class="brand">beckmans designhögskola</span>
-      <div class="menu">
-        <span class="nav-link">form</span>
-        <span class="nav-link">mode</span>
-        <span class="nav-link">visuell kommunikation</span>
-        <span class="nav-link">kvällskolan</span>
-        <span class="nav-link">ansök</span>
-      </div>
+      <span class="brand nav-fixed">beckmans designhögskola</span>
+      <span class="nav-link nav-fixed nav-form">form</span>
+      <span class="nav-link nav-fixed nav-mode">mode</span>
+      <span class="nav-link nav-fixed nav-vk">visuell kommunikation</span>
+      <span class="nav-link nav-fixed nav-evening">kvällskolan</span>
+      <span class="nav-link nav-fixed nav-apply">ansök</span>
     </nav>
 
     <div class="headline">
@@ -284,6 +300,9 @@
   <script>
     const DESIGN_W = 1440;
     const DESIGN_H = 800;
+    const HP_TEXT_OPTICAL_Y = 4;
+    const HP_BRACKET_OPTICAL_Y = 8;
+    const HP_LEFT_BRACKET_MARGIN_FIX = 9;
 
     const states = [
       {
@@ -342,6 +361,7 @@
     let webglEnabled = false;
     let fallbackIndex = -1;
     const fallbackLayer = bgA;
+    const fallbackCache = new Map();
 
     function placeHp(index) {
       const state = states[index];
@@ -350,15 +370,15 @@
       const offsetY = (hero.clientHeight - DESIGN_H * scale) * 0.5;
       const bracketW = 25.9755859375 * scale;
       const bracketH = 60.845703125 * scale;
-      hpText.style.top = `${offsetY + state.hp.textY * scale}px`;
+      hpText.style.top = `${offsetY + (state.hp.textY + HP_TEXT_OPTICAL_Y) * scale}px`;
       hpText.style.left = `${offsetX + state.hp.textX * scale}px`;
       hpText.style.fontSize = `${48 * scale}px`;
       hpText.style.letterSpacing = `${-0.96 * scale}px`;
-      hpBracketLeft.style.top = `${offsetY + state.hp.leftY * scale}px`;
-      hpBracketLeft.style.left = `${offsetX + state.hp.leftX * scale}px`;
+      hpBracketLeft.style.top = `${offsetY + (state.hp.leftY + HP_BRACKET_OPTICAL_Y) * scale}px`;
+      hpBracketLeft.style.left = `${offsetX + (state.hp.leftX - HP_LEFT_BRACKET_MARGIN_FIX) * scale}px`;
       hpBracketLeft.style.width = `${bracketW}px`;
       hpBracketLeft.style.height = `${bracketH}px`;
-      hpBracketRight.style.top = `${offsetY + state.hp.rightY * scale}px`;
+      hpBracketRight.style.top = `${offsetY + (state.hp.rightY + HP_BRACKET_OPTICAL_Y) * scale}px`;
       hpBracketRight.style.left = `${offsetX + state.hp.rightX * scale}px`;
       hpBracketRight.style.width = `${bracketW}px`;
       hpBracketRight.style.height = `${bracketH}px`;
@@ -372,14 +392,23 @@
     }
 
     function setFallbackImage(index) {
-      if (fallbackIndex === index) return;
       const img = fallbackLayer.querySelector("img");
       const src = states[index].image;
+      img.alt = `Beckmans ${textLinks[index].dataset.label}`;
+      if (fallbackIndex === index || img.src.endsWith(src)) {
+        fallbackIndex = index;
+        return;
+      }
+      if (fallbackCache.get(src)) {
+        img.src = src;
+        fallbackIndex = index;
+        return;
+      }
       const preload = new Image();
       preload.decoding = "async";
       preload.onload = () => {
+        fallbackCache.set(src, true);
         img.src = src;
-        img.alt = `Beckmans ${textLinks[index].dataset.label}`;
         fallbackIndex = index;
       };
       preload.src = src;
@@ -814,8 +843,19 @@
     }
 
     function init() {
+      states.forEach((state) => {
+        const preload = new Image();
+        preload.decoding = "async";
+        preload.onload = () => fallbackCache.set(state.image, true);
+        preload.src = state.image;
+      });
+      const fallbackImg = fallbackLayer.querySelector("img");
+      fallbackImg.src = states[0].image;
+      fallbackImg.alt = `Beckmans ${textLinks[0].dataset.label}`;
+      fallbackCache.set(states[0].image, true);
+      fallbackIndex = 0;
       bgB.classList.remove("is-visible");
-      showFallback(0);
+      setFallbackImage(0);
       fallbackLayer.classList.remove("is-visible");
       setIdle();
       textLinks.forEach((link, index) => {
@@ -839,8 +879,8 @@
         webglEnabled = true;
         hero.classList.add("has-webgl");
         webglMorph.onSettle = () => {
-          hero.classList.remove("webgl-active");
           if (current >= 0) showFallback(current);
+          hero.classList.remove("webgl-active");
         };
         if (current >= 0) webglMorph.setTarget(current);
       });
