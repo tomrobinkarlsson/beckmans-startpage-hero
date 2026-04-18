@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beckmans Hero States</title>
   <style>
+    @font-face {
+      font-family: "FuturaEFOP-DemiBold";
+      src: url("./assets/fonts/FuturaEFOP-DemiBold.otf") format("opentype");
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "FuturaEFOP-Book";
+      src: url("./assets/fonts/FuturaEFOP-Book.otf") format("opentype");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
@@ -59,6 +75,7 @@
       align-items: center;
       gap: 16px;
       z-index: 3;
+      pointer-events: none;
     }
 
     .brand {
@@ -91,8 +108,8 @@
     .headline {
       position: absolute;
       left: 16px;
-      top: 160px;
-      width: min(1118px, calc(100% - 260px));
+      bottom: 30px;
+      width: min(1118.507px, calc(100% - 32px));
       display: flex;
       flex-direction: column;
       gap: 40px;
@@ -102,27 +119,29 @@
     }
 
     .line {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      font-family: inherit;
+      text-align: left;
+      padding: 0;
       margin: 0;
-      font-size: clamp(66px, 12.7vw, 183px);
-      line-height: 0.9;
+      font-size: clamp(66px, 12.6815vw, 182.613px);
+      line-height: 0.84;
       letter-spacing: -0.04em;
       color: #000;
       opacity: 1;
       width: fit-content;
-      transition: opacity 320ms ease, color 280ms ease, transform 320ms ease;
-    }
-
-    .line[data-index] {
       cursor: pointer;
-    }
-
-    .line[data-index]:hover {
-      transform: translateX(6px);
+      transition: opacity 320ms ease, color 280ms ease;
     }
 
     .line.is-active {
       opacity: 1;
-      transform: translateX(8px);
+    }
+
+    .line.line-vk {
+      line-height: 0.9;
     }
 
     .hp {
@@ -130,14 +149,15 @@
       left: 364px;
       top: 201px;
       margin: 0;
-      font-size: clamp(28px, 3.35vw, 48px);
-      line-height: 1;
+      font-size: clamp(28px, 3.333vw, 48px);
+      line-height: normal;
       letter-spacing: -0.02em;
       color: #fff;
       z-index: 2;
       opacity: 0;
       will-change: top, left, opacity;
       transition: top 520ms cubic-bezier(.2, .65, .2, 1), left 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease;
+      pointer-events: none;
     }
 
     .hero.is-idle .top-nav,
@@ -154,7 +174,7 @@
 
     .hero:not(.is-idle) .line {
       color: #fff;
-      opacity: 0.45;
+      opacity: 0.5;
     }
 
     .hero:not(.is-idle) .line.is-active {
@@ -166,12 +186,22 @@
     }
 
     @media (max-width: 1050px) {
-      .headline { width: calc(100% - 32px); top: 120px; gap: 20px; }
       .top-nav { flex-direction: column; align-items: flex-start; gap: 12px; }
       .menu { gap: 16px; flex-wrap: wrap; }
       .brand { font-size: 14px; }
       .nav-link { font-size: 14px; }
-      .hp { left: auto; right: 24px; transition: top 520ms cubic-bezier(.2, .65, .2, 1), opacity 260ms ease; }
+      .headline { width: calc(100% - 32px); bottom: 16px; gap: 20px; }
+      .line { font-size: clamp(56px, 16vw, 140px); }
+      .hp { font-size: clamp(22px, 5vw, 38px); }
+    }
+
+    @media (max-width: 760px) {
+      .top-nav { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .menu { gap: 16px; flex-wrap: wrap; }
+      .brand { font-size: 14px; }
+      .nav-link { font-size: 14px; }
+      .headline { gap: 10px; }
+      .line { font-size: clamp(46px, 14vw, 96px); }
     }
   </style>
 </head>
@@ -182,7 +212,7 @@
 
     <nav class="top-nav">
       <span class="brand">beckmans designhögskola</span>
-      <div class="menu" id="menu">
+      <div class="menu">
         <span class="nav-link">form</span>
         <span class="nav-link">mode</span>
         <span class="nav-link">visuell kommunikation</span>
@@ -192,29 +222,32 @@
     </nav>
 
     <div class="headline">
-      <p class="line" data-line data-index="0" tabindex="0">form</p>
-      <p class="line" data-line data-index="1" tabindex="0">mode</p>
-      <p class="line" data-line data-index="2" tabindex="0">visuell kommunikation</p>
+      <button class="line" type="button" data-index="0" data-label="form">form</button>
+      <button class="line" type="button" data-index="1" data-label="mode">mode</button>
+      <button class="line line-vk" type="button" data-index="2" data-label="visuell kommunikation">visuell<br>kommunikation</button>
     </div>
     <p class="hp" id="hp">180hp</p>
   </section>
 
   <script>
+    const DESIGN_W = 1440;
+    const DESIGN_H = 800;
+
     const states = [
       {
         image: "https://beckmans.se/wp-content/uploads/2025/02/hallway-bench-mikael-westman-01-1500x1000.jpg",
-        hpXRatio: 0.2528,
-        hpYRatio: 0.2513
+        hpX: 364,
+        hpY: 201
       },
       {
         image: "https://beckmans.se/wp-content/uploads/2025/06/Erik-Marklund-Beckmans-Designhogskola-4-1500x1200.jpg",
-        hpXRatio: 0.3097,
-        hpYRatio: 0.4538
+        hpX: 446,
+        hpY: 363
       },
       {
         image: "https://beckmans.se/wp-content/uploads/2025/12/491418745_18385417684138754_597021362675519425_n.jpeg",
-        hpXRatio: 0.7896,
-        hpYRatio: 0.8588
+        hpX: 1137,
+        hpY: 687
       }
     ];
 
@@ -223,20 +256,21 @@
     const bgA = document.getElementById("bg-a");
     const bgB = document.getElementById("bg-b");
     const hp = document.getElementById("hp");
-    const lines = [...document.querySelectorAll("[data-line]")];
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
 
     let current = -1;
     let showA = true;
 
-    function paintText(index) {
-      lines.forEach((line, i) => line.classList.toggle("is-active", i === index));
-      const pxTop = Math.round(hero.clientHeight * states[index].hpYRatio);
-      const pxLeft = Math.round(hero.clientWidth * states[index].hpXRatio);
+    function placeHp(index) {
+      const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
+      const pxLeft = Math.round((hero.clientWidth * states[index].hpX) / DESIGN_W);
       hp.style.top = `${pxTop}px`;
-      if (window.innerWidth > 1050) {
-        hp.style.left = `${pxLeft}px`;
-      }
+      hp.style.left = `${pxLeft}px`;
+    }
+
+    function paintText(index) {
+      textLinks.forEach((line, i) => line.classList.toggle("is-active", i === index));
+      placeHp(index);
     }
 
     function paintBackground(index) {
@@ -244,7 +278,7 @@
       const prevLayer = showA ? bgA : bgB;
       const img = nextLayer.querySelector("img");
       img.src = states[index].image;
-      img.alt = `Beckmans ${textLinks[index].textContent.trim()}`;
+      img.alt = `Beckmans ${textLinks[index].dataset.label}`;
       nextLayer.classList.add("is-visible");
       prevLayer.classList.remove("is-visible");
       showA = !showA;
@@ -261,7 +295,7 @@
     function setIdle() {
       current = -1;
       hero.classList.add("is-idle");
-      lines.forEach((line) => line.classList.remove("is-active"));
+      textLinks.forEach((line) => line.classList.remove("is-active"));
       bgA.classList.remove("is-visible");
       bgB.classList.remove("is-visible");
     }
@@ -281,7 +315,7 @@
       headline.addEventListener("mouseleave", setIdle);
       hero.addEventListener("mouseleave", setIdle);
       window.addEventListener("resize", () => {
-        if (current >= 0) paintText(current);
+        if (current >= 0) placeHp(current);
       });
     }
 
