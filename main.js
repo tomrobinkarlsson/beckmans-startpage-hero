@@ -200,6 +200,9 @@ class DisplacementTransition {
       premultipliedAlpha: false,
       dpr: Math.min(devicePixelRatio || 1, 2),
     });
+    // OGL sets inline width/height — remove so CSS inset:0 controls layout
+    this.canvas.style.removeProperty('width');
+    this.canvas.style.removeProperty('height');
     const gl = this.renderer.gl;
 
     // Load shaders (files with inline fallback)
@@ -347,11 +350,20 @@ class DisplacementTransition {
     this.targetMouse = [x, y];
   }
 
-  // Sync canvas size with CSS layout
+  // Sync canvas buffer to CSS layout without overriding CSS dimensions
   resize() {
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
+    const bw = Math.round(w * dpr);
+    const bh = Math.round(h * dpr);
+    if (this.canvas.width !== bw || this.canvas.height !== bh) {
+      this.canvas.width = bw;
+      this.canvas.height = bh;
+    }
+    this.renderer.gl.viewport(0, 0, bw, bh);
     if (this.program) {
-      this.program.uniforms.uResolution.value = [this.canvas.width, this.canvas.height];
+      this.program.uniforms.uResolution.value = [bw, bh];
     }
   }
 
