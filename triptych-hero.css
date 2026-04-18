@@ -173,14 +173,7 @@ body {
 .nav-apply { left: 92.200%; }
 
 .column-meta {
-  position: absolute;
-  left: 0;
-  bottom: 8px;
-  z-index: 10;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  backdrop-filter: blur(8px);
+  z-index: 12;
   transition: opacity 250ms ease;
 }
 
@@ -188,87 +181,115 @@ body {
   opacity: 0.72;
 }
 
-.meta-row {
-  display: inline-flex;
-  align-items: center;
+.slide-label {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
-.meta-divider {
+.label-bottom-left {
+  bottom: 8px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.label-pad {
+  width: 16px;
+  height: 24px;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.label-content {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.label-text {
+  font-family: "Geist Mono", "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 1.04px;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  font-feature-settings: "ss09" 1, "ss08" 1;
+}
+
+.label-project {
+  text-transform: uppercase;
+}
+
+.label-cap {
+  width: 15px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.label-cap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.label-sep {
   width: 16px;
   height: 1px;
   background: #000;
 }
 
-.meta-cell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  background: #000;
-  color: #fff;
-}
-
-.meta-cap {
-  width: 16px;
-  flex: 0 0 16px;
-  border-radius: 999px 0 0 999px;
-}
-
-.meta-text {
-  padding: 0 4px 0 0;
-  font-family: "FuturaEFOP-Book", "Courier New", monospace;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  line-height: 1;
-}
-
-.meta-end {
-  width: 15px;
-  flex: 0 0 15px;
-  border-radius: 0 999px 999px 0;
-}
-
-.meta-progress {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 24px;
-  height: 24px;
-  padding-right: 4px;
-}
-
-.pagination-markers {
-  display: inline-flex;
+.label-dots {
+  display: flex;
   align-items: center;
   gap: 4px;
+  height: 8px;
 }
 
-.pagination-dot {
+.dot {
   width: 4px;
   height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  background: #fff;
+  opacity: 0.3;
+  flex-shrink: 0;
 }
 
-.pagination-track {
-  position: relative;
+.dot-bar {
   width: 24px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.3);
+  position: relative;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
-.pagination-fill {
+.dot-fill {
   display: block;
-  width: 24px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
   height: 100%;
-  border-radius: 999px;
+  border-radius: 9999px;
   background: #fff;
-  transform-origin: left center;
+  animation: dot-progress 3s linear forwards;
+}
+
+@keyframes dot-progress {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 .hero-cursor {

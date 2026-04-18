@@ -50,24 +50,21 @@ const PROGRAMS = [
         name: "Fanny Axnér",
         title: "Trip stackable",
         images: [
-          "https://www.figma.com/api/mcp/asset/247de4d8-69a8-4420-b992-681283d9cfd4",
-          "./assets/images/form-figma.png",
+          "https://www.figma.com/api/mcp/asset/e5015b5f-ef97-482f-912f-74a8e29877bb",
         ],
       },
       {
         name: "Ebba Qvinnström",
         title: "VILDA",
         images: [
-          "https://www.figma.com/api/mcp/asset/278b8ad1-727a-4e00-bb17-80514ccf0709",
-          "./assets/images/form.jpg",
+          "https://www.figma.com/api/mcp/asset/3bb59952-6ed5-432f-b4a4-1ca23e07ad24",
         ],
       },
       {
         name: "Anna Nyman",
         title: "såhär",
         images: [
-          "https://www.figma.com/api/mcp/asset/0f64b8e4-c688-4b77-bc99-00d5b0012e4f",
-          "./assets/images/form-figma.png",
+          "https://www.figma.com/api/mcp/asset/9ed69963-23a6-4e46-935b-242b8a453ec7",
         ],
       },
     ],
@@ -80,24 +77,21 @@ const PROGRAMS = [
         name: "Hilda Landström Ferm",
         title: "Dysmorphia",
         images: [
-          "https://www.figma.com/api/mcp/asset/d9725796-7814-4ab4-b044-8bb70f9de11b",
-          "./assets/images/mode-figma.png",
+          "https://www.figma.com/api/mcp/asset/3c59c673-a389-48c6-8d3f-642636e10291",
         ],
       },
       {
         name: "Asli Cömert",
         title: "NOBEL CREATIONS",
         images: [
-          "https://www.figma.com/api/mcp/asset/69ee5a0b-6e41-4a26-a320-896f525ba28a",
-          "./assets/images/mode.jpg",
+          "https://www.figma.com/api/mcp/asset/a6a5a74e-6840-431a-b1f6-c350dc982360",
         ],
       },
       {
         name: "Clara Samor",
         title: "VÄCK",
         images: [
-          "https://www.figma.com/api/mcp/asset/cb15edaa-f165-4bce-a84c-2a4756542545",
-          "./assets/images/mode-figma.png",
+          "https://www.figma.com/api/mcp/asset/667c8690-1785-4a1c-8c2d-d47151f30b6f",
         ],
       },
     ],
@@ -110,24 +104,21 @@ const PROGRAMS = [
         name: "Eliot Axelsson",
         title: "Psyk",
         images: [
-          "https://www.figma.com/api/mcp/asset/5d150a7b-bd4b-4fa2-97c3-6efbc28a2067",
-          "./assets/images/vk-figma.png",
+          "https://www.figma.com/api/mcp/asset/6a64ffbd-abb4-437d-af2f-043ac4e76bc9",
         ],
       },
       {
         name: "Alva Nylander",
         title: "Sånt du spottar ur dig",
         images: [
-          "https://www.figma.com/api/mcp/asset/10b6317b-523c-4840-9cc2-d12cf93b3ff4",
-          "./assets/images/vk.jpg",
+          "https://www.figma.com/api/mcp/asset/4eeb2268-4fd7-4632-8fa8-87b007311df5",
         ],
       },
       {
         name: "Maja Ringsäter",
         title: "The Letter Is A Rich Medium",
         images: [
-          "https://www.figma.com/api/mcp/asset/e334aeb6-4412-4b1f-9c9b-dfbee7fe17df",
-          "./assets/images/vk-figma.png",
+          "https://www.figma.com/api/mcp/asset/d1145e2e-6413-489d-9b3c-85dab80ab4a8",
         ],
       },
     ],
@@ -270,11 +261,7 @@ class ColumnHero {
     this.hoverMix = 0;
     this.isHovered = false;
     this.fallbackSwapAt = 0;
-    this.studentImageOffsets = this.program.students.map(() => 0);
-    this.cycleProgress = 0;
-    this.progressFillElement = null;
-    this.stateStartedAt = performance.now();
-    this.nextChangeTime = this.stateStartedAt + CONFIG.timing.autoAdvanceMs + CONFIG.timing.initialOffsetMs * index;
+    this.nextChangeTime = performance.now() + CONFIG.timing.autoAdvanceMs + CONFIG.timing.initialOffsetMs * index;
   }
 
   async init() {
@@ -473,38 +460,12 @@ class ColumnHero {
       return;
     }
 
-    const total = this.program.students.length;
-    const fragment = document.createDocumentFragment();
-    const row = document.createElement("span");
-    row.className = "pagination-markers";
-
-    for (let index = 0; index < total; index += 1) {
-      if (index === activeIndex) {
-        const track = document.createElement("span");
-        track.className = "pagination-track";
-        const fill = document.createElement("span");
-        fill.className = "pagination-fill";
-        track.appendChild(fill);
-        row.appendChild(track);
-        this.progressFillElement = fill;
-      } else {
-        const dot = document.createElement("span");
-        dot.className = "pagination-dot";
-        row.appendChild(dot);
-      }
-    }
-
-    fragment.appendChild(row);
-    this.progressMarkers.replaceChildren(fragment);
-    this.applyCycleProgress();
-  }
-
-  applyCycleProgress() {
-    if (!this.progressFillElement) {
-      return;
-    }
-    const scale = 0.333 + (0.667 * this.cycleProgress);
-    this.progressFillElement.style.transform = `scaleX(${scale})`;
+    const markers = this.program.students.map((_, index) => (
+      index === activeIndex
+        ? '<span class="dot-bar is-active"><span class="dot-fill"></span></span>'
+        : '<span class="dot"></span>'
+    ));
+    this.progressMarkers.innerHTML = markers.join("");
   }
 
   setHover(value) {
@@ -522,9 +483,7 @@ class ColumnHero {
     }
 
     const nextStudent = (this.currentState.student + 1) % this.program.students.length;
-    const nextStudentImageCount = this.program.students[nextStudent]?.images.length || 1;
-    const nextImage = this.studentImageOffsets[nextStudent] % nextStudentImageCount;
-    this.studentImageOffsets[nextStudent] += 1;
+    const nextImage = 0;
     const studentChanged = true;
 
     this.pendingState = { student: nextStudent, image: nextImage };
@@ -532,8 +491,6 @@ class ColumnHero {
     this.transitioning = true;
     this.progress = 0;
     this.progressTarget = 1;
-    this.cycleProgress = 1;
-    this.applyCycleProgress();
 
     if (this.webglEnabled) {
       const currentTexture = this.getTextureForState(this.currentState);
@@ -580,9 +537,6 @@ class ColumnHero {
     }
 
     this.pendingStudentChange = false;
-    this.stateStartedAt = now;
-    this.cycleProgress = 0;
-    this.applyCycleProgress();
     this.scheduleNext(now);
   }
 
@@ -596,12 +550,6 @@ class ColumnHero {
   }
 
   update(now, deltaSeconds) {
-    if (!this.transitioning) {
-      const elapsed = now - this.stateStartedAt;
-      this.cycleProgress = Math.max(0, Math.min(1, elapsed / CONFIG.timing.autoAdvanceMs));
-      this.applyCycleProgress();
-    }
-
     if (!this.transitioning && now >= this.nextChangeTime) {
       this.startTransition(now);
     }
