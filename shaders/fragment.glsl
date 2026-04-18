@@ -29,49 +29,45 @@ vec2 coverUV(vec2 uv, vec2 texRes, vec2 screenRes) {
 }
 
 void main() {
-    // Sample displacement map (grayscale Perlin noise)
     float disp = texture2D(uDisplacement, vUv).r;
 
-    // Displacement strength decreases as transition progresses
-    float strength = uIntensity * (1.0 - uProgress);
+    // Each texture gets its own displacement that ramps up then down.
+    // Texture 1 (outgoing): distortion grows as it fades out
+    // Texture 2 (incoming): distortion shrinks as it fades in
+    float dispTex1 = uIntensity * uProgress;          // 0 → peak
+    float dispTex2 = uIntensity * (1.0 - uProgress);  // peak → 0
 
-    // Subtle mouse-driven offset for organic feel
-    vec2 mouseOff = (uMouse - 0.5) * 0.015 * strength;
+    vec2 mouseOff = (uMouse - 0.5) * 0.01;
 
-    // Directional warp: mostly horizontal, slight vertical
-    vec2 dir = vec2(0.8, 0.2);
+    // Displace each texture independently in opposite directions
+    vec2 dir1 = vec2(disp * dispTex1);
+    vec2 dir2 = vec2((1.0 - disp) * dispTex2);
 
-    // Offset source UVs in opposite directions for organic cross-warp
-    vec2 d1 = vUv + dir * disp * strength + mouseOff;
-    vec2 d2 = vUv - dir * (1.0 - disp) * strength - mouseOff;
-
-    // Map displaced UVs to cover-fit texture space, flip Y for correct orientation
-    vec2 uv1 = coverUV(d1, uTex1Res, uResolution);
+    vec2 uv1 = coverUV(vUv + dir1 + mouseOff * dispTex1, uTex1Res, uResolution);
     uv1.y = 1.0 - uv1.y;
-    vec2 uv2 = coverUV(d2, uTex2Res, uResolution);
+    vec2 uv2 = coverUV(vUv - dir2 - mouseOff * dispTex2, uTex2Res, uResolution);
     uv2.y = 1.0 - uv2.y;
 
-    // Chromatic aberration scaled to displacement strength
-    float ca = uRgbShift * strength;
+    // Chromatic aberration — stronger during mid-transition
+    float midPeak = 4.0 * uProgress * (1.0 - uProgress);
+    float ca = uRgbShift * midPeak;
 
-    // Sample texture 1 with RGB channel offset
     vec3 c1 = vec3(
         texture2D(uTexture1, uv1 + vec2(ca, 0.0)).r,
         texture2D(uTexture1, uv1).g,
         texture2D(uTexture1, uv1 - vec2(ca, 0.0)).b
     );
 
-    // Sample texture 2 with RGB channel offset
     vec3 c2 = vec3(
         texture2D(uTexture2, uv2 + vec2(ca, 0.0)).r,
         texture2D(uTexture2, uv2).g,
         texture2D(uTexture2, uv2 - vec2(ca, 0.0)).b
     );
 
-    // Crossfade between textures (progress is already GSAP-eased)
+    // Crossfade
     vec3 color = mix(c1, c2, uProgress);
 
-    // 50% dark overlay to match Figma comp
+    // 50% dark overlay
     color *= 0.5;
 
     gl_FragColor = vec4(color, uAlpha);

@@ -25,8 +25,8 @@ const CONFIG = {
   rgbShift: 0.003,       // Chromatic aberration amount
 
   // GSAP animation timing
-  duration: 1.4,         // Displacement morph duration (seconds)
-  ease: 'sine.inOut',    // Soft, fluid easing
+  duration: 1.2,         // Displacement morph duration (seconds)
+  ease: 'power2.inOut',  // Symmetric ease: builds up then settles
   revealDuration: 0.8,   // Alpha fade-in duration
   revealEase: 'sine.out',
   hideDuration: 0.6,     // Alpha fade-out duration
@@ -74,16 +74,15 @@ vec2 coverUV(vec2 uv, vec2 t, vec2 s) {
 }
 void main() {
     float disp = texture2D(uDisplacement, vUv).r;
-    float strength = uIntensity * (1.0 - uProgress);
-    vec2 mouseOff = (uMouse - 0.5) * 0.015 * strength;
-    vec2 dir = vec2(0.8, 0.2);
-    vec2 d1 = vUv + dir * disp * strength + mouseOff;
-    vec2 d2 = vUv - dir * (1.0 - disp) * strength - mouseOff;
-    vec2 uv1 = coverUV(d1, uTex1Res, uResolution);
+    float d1s = uIntensity * uProgress;
+    float d2s = uIntensity * (1.0 - uProgress);
+    vec2 mo = (uMouse - 0.5) * 0.01;
+    vec2 uv1 = coverUV(vUv + vec2(disp * d1s) + mo * d1s, uTex1Res, uResolution);
     uv1.y = 1.0 - uv1.y;
-    vec2 uv2 = coverUV(d2, uTex2Res, uResolution);
+    vec2 uv2 = coverUV(vUv - vec2((1.0 - disp) * d2s) - mo * d2s, uTex2Res, uResolution);
     uv2.y = 1.0 - uv2.y;
-    float ca = uRgbShift * strength;
+    float mp = 4.0 * uProgress * (1.0 - uProgress);
+    float ca = uRgbShift * mp;
     vec3 c1 = vec3(texture2D(uTexture1,uv1+vec2(ca,0)).r, texture2D(uTexture1,uv1).g, texture2D(uTexture1,uv1-vec2(ca,0)).b);
     vec3 c2 = vec3(texture2D(uTexture2,uv2+vec2(ca,0)).r, texture2D(uTexture2,uv2).g, texture2D(uTexture2,uv2-vec2(ca,0)).b);
     vec3 color = mix(c1, c2, uProgress) * 0.5;
