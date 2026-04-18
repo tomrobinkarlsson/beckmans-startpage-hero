@@ -47,7 +47,7 @@ const VERTEX_FALLBACK = `attribute vec2 position;
 attribute vec2 uv;
 varying vec2 vUv;
 void main() {
-    vUv = vec2(uv.x, 1.0 - uv.y);
+    vUv = uv;
     gl_Position = vec4(position, 0.0, 1.0);
 }`;
 
@@ -190,6 +190,7 @@ class DisplacementTransition {
     this.alphaTween = null;
     this.ready = false;
     this.raf = null;
+    this.pendingSwap = null;  // deferred texture swap to prevent flash
   }
 
   async init() {
@@ -249,15 +250,15 @@ class DisplacementTransition {
       transparent: true,
     });
 
-    // Fullscreen quad (two triangles, UVs strictly 0–1)
+    // Fullscreen quad — UV (0,0) at top-left of screen, (1,1) at bottom-right
     const geometry = new Geometry(gl, {
       position: { size: 2, data: new Float32Array([
         -1, -1,   1, -1,   1,  1,
         -1, -1,   1,  1,  -1,  1,
       ])},
       uv: { size: 2, data: new Float32Array([
-         0,  0,   1,  0,   1,  1,
-         0,  0,   1,  1,   0,  1,
+         0,  1,   1,  1,   1,  0,
+         0,  1,   1,  0,   0,  0,
       ])},
     });
 
@@ -295,34 +296,47 @@ class DisplacementTransition {
   setTarget(index) {
     if (!this.ready || index < 0 || index >= this.textures.length) return;
 
-    const u = this.program.uniforms;
-    const isSwitch = this.toIndex >= 0 && this.toIndex < this.textures.length;
-
-    // "From" texture: previous target or white if coming from idle
-    if (isSwitch) {
-      const from = this.textures[this.toIndex];
-      u.uTexture1.value = from.texture;
-      u.uTex1Res.value = [from.width, from.height];
-    } else {
-      u.uTexture1.value = this.whiteTexture.texture;
-      u.uTex1Res.value = [1, 1];
-    }
-
-    // "To" texture: the target image
-    const to = this.textures[index];
-    u.uTexture2.value = to.texture;
-    u.uTex2Res.value = [to.width, to.height];
-    this.toIndex = index;
-
-    // Kill in-flight tweens
+    // Kill in-flight tweens immediately
     if (this.activeTween) this.activeTween.kill();
     if (this.alphaTween) this.alphaTween.kill();
 
-    // Reset progress and sync uniform immediately so the first rendered
-    // frame shows 100% "from" texture — prevents single-frame flash
+    const isSwitch = this.toIndex >= 0 && this.toIndex < this.textures.length;
+
+    // Build the from/to texture data
+    let fromTex, fromRes;
+    if (isSwitch) {
+      const from = this.textures[this.toIndex];
+      fromTex = from.texture;
+      fromRes = [from.width, from.height];
+    } else {
+      fromTex = this.whiteTexture.texture;
+      fromRes = [1, 1];
+    }
+    const to = this.textures[index];
+
+    // Defer the texture swap + progress reset to the render loop so
+    // they are applied atomically on the same frame — prevents flash
+    this.pendingSwap = { fromTex, fromRes, toTex: to.texture, toRes: [to.width, to.height], index };
+  }
+
+  // Called from the render loop to apply pending texture swaps
+  applyPendingSwap() {
+    if (!this.pendingSwap) return;
+    const { fromTex, fromRes, toTex, toRes, index } = this.pendingSwap;
+    this.pendingSwap = null;
+
+    const u = this.program.uniforms;
+
+    // Set textures and reset progress atomically
+    u.uTexture1.value = fromTex;
+    u.uTex1Res.value = fromRes;
+    u.uTexture2.value = toTex;
+    u.uTex2Res.value = toRes;
     this.progress.value = 0;
     u.uProgress.value = 0;
+    this.toIndex = index;
 
+    // Start the displacement animation
     this.activeTween = gsap.to(this.progress, {
       value: 1,
       duration: CONFIG.duration,
@@ -374,6 +388,9 @@ class DisplacementTransition {
   startLoop() {
     const loop = (t) => {
       this.raf = requestAnimationFrame(loop);
+
+      // Apply deferred texture swap before rendering (prevents flash)
+      this.applyPendingSwap();
 
       // Lerp mouse for smooth tracking
       this.mouse[0] += (this.targetMouse[0] - this.mouse[0]) * CONFIG.mouseLerp;
