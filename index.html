@@ -43,7 +43,8 @@
       position: absolute;
       inset: 0;
       opacity: 0;
-      will-change: opacity, transform, filter, clip-path;
+      transition: opacity 420ms ease;
+      will-change: opacity;
     }
 
     .bg-layer.is-visible { opacity: 1; }
@@ -64,34 +65,29 @@
       transition: background-color 280ms ease;
     }
 
-    .bg-layer.is-revealing {
-      animation: layerReveal 760ms cubic-bezier(.22, .77, .17, 1) both;
-      z-index: 1;
-    }
-
-    .bg-layer.is-exiting {
-      animation: layerExit 760ms cubic-bezier(.22, .77, .17, 1) both;
-      z-index: 0;
-    }
-
-    .transition-flash {
+    .webgl-canvas {
       position: absolute;
       inset: 0;
-      pointer-events: none;
-      opacity: 0;
       z-index: 1;
-      background: radial-gradient(
-        circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-        rgba(255, 255, 255, 0.22) 0%,
-        rgba(255, 255, 255, 0.13) 14%,
-        rgba(255, 255, 255, 0) 48%
-      );
-      mix-blend-mode: screen;
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
     }
 
-    .hero.is-transitioning .transition-flash {
-      animation: flashPulse 760ms cubic-bezier(.22, .77, .17, 1);
+    .image-dim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 240ms ease;
     }
+
+    .hero.has-webgl .bg-layer { display: none; }
 
     .top-nav {
       position: absolute;
@@ -213,41 +209,12 @@
       opacity: 1;
     }
 
-    @keyframes layerReveal {
-      0% {
-        opacity: 0;
-        clip-path: circle(0% at var(--reveal-x, 50%) var(--reveal-y, 50%));
-        transform: scale(1.14);
-        filter: blur(18px) saturate(1.25);
-      }
-      48% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 1;
-        clip-path: circle(165% at var(--reveal-x, 50%) var(--reveal-y, 50%));
-        transform: scale(1);
-        filter: blur(0) saturate(1);
-      }
+    .hero.has-webgl:not(.is-idle) .webgl-canvas {
+      opacity: 1;
     }
 
-    @keyframes layerExit {
-      0% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0) saturate(1);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.08);
-        filter: blur(10px) saturate(0.92);
-      }
-    }
-
-    @keyframes flashPulse {
-      0% { opacity: 0; }
-      20% { opacity: 0.9; }
-      100% { opacity: 0; }
+    .hero.has-webgl:not(.is-idle) .image-dim {
+      opacity: 1;
     }
 
     @media (max-width: 1050px) {
@@ -274,7 +241,8 @@
   <section class="hero is-idle" aria-label="Beckmans hero states">
     <div class="bg-layer" id="bg-a"><img alt="" /></div>
     <div class="bg-layer" id="bg-b"><img alt="" /></div>
-    <div class="transition-flash" aria-hidden="true"></div>
+    <canvas class="webgl-canvas" id="webgl-canvas" aria-hidden="true"></canvas>
+    <div class="image-dim" aria-hidden="true"></div>
 
     <nav class="top-nav">
       <span class="brand">beckmans designhögskola</span>
@@ -301,17 +269,17 @@
 
     const states = [
       {
-        image: "https://beckmans.se/wp-content/uploads/2025/02/hallway-bench-mikael-westman-01-1500x1000.jpg",
+        image: "./assets/images/form.jpg",
         hpX: 364,
         hpY: 201
       },
       {
-        image: "https://beckmans.se/wp-content/uploads/2025/06/Erik-Marklund-Beckmans-Designhogskola-4-1500x1200.jpg",
+        image: "./assets/images/mode.jpg",
         hpX: 446,
         hpY: 363
       },
       {
-        image: "https://beckmans.se/wp-content/uploads/2025/12/491418745_18385417684138754_597021362675519425_n.jpeg",
+        image: "./assets/images/vk.jpg",
         hpX: 1137,
         hpY: 687
       }
@@ -321,35 +289,13 @@
     const headline = document.querySelector(".headline");
     const bgA = document.getElementById("bg-a");
     const bgB = document.getElementById("bg-b");
+    const webglCanvas = document.getElementById("webgl-canvas");
     const hp = document.getElementById("hp");
     const textLinks = [...document.querySelectorAll(".line[data-index]")];
-    const bgLayers = [bgA, bgB];
 
     let current = -1;
     let showA = true;
-    let flashTimer = null;
-
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    function getRevealPoint(triggerEl, evt) {
-      const heroRect = hero.getBoundingClientRect();
-      let x;
-      let y;
-      if (evt && typeof evt.clientX === "number" && typeof evt.clientY === "number") {
-        x = ((evt.clientX - heroRect.left) / heroRect.width) * 100;
-        y = ((evt.clientY - heroRect.top) / heroRect.height) * 100;
-      } else {
-        const rect = triggerEl.getBoundingClientRect();
-        x = ((rect.left + rect.width / 2 - heroRect.left) / heroRect.width) * 100;
-        y = ((rect.top + rect.height / 2 - heroRect.top) / heroRect.height) * 100;
-      }
-      return {
-        x: clamp(x, 0, 100),
-        y: clamp(y, 0, 100)
-      };
-    }
+    let webglEnabled = false;
 
     function placeHp(index) {
       const pxTop = Math.round((hero.clientHeight * states[index].hpY) / DESIGN_H);
@@ -363,75 +309,351 @@
       placeHp(index);
     }
 
-    function paintBackground(index, revealPoint) {
+    function paintBackgroundFallback(index) {
       const nextLayer = showA ? bgB : bgA;
       const prevLayer = showA ? bgA : bgB;
       const img = nextLayer.querySelector("img");
       img.src = states[index].image;
       img.alt = `Beckmans ${textLinks[index].dataset.label}`;
-
-      const revealX = `${revealPoint.x}%`;
-      const revealY = `${revealPoint.y}%`;
-      hero.style.setProperty("--reveal-x", revealX);
-      hero.style.setProperty("--reveal-y", revealY);
-      nextLayer.style.setProperty("--reveal-x", revealX);
-      nextLayer.style.setProperty("--reveal-y", revealY);
-      prevLayer.style.setProperty("--reveal-x", revealX);
-      prevLayer.style.setProperty("--reveal-y", revealY);
-
-      nextLayer.classList.remove("is-exiting", "is-revealing");
-      prevLayer.classList.remove("is-revealing");
-      void nextLayer.offsetWidth;
-      nextLayer.classList.add("is-visible", "is-revealing");
+      nextLayer.classList.add("is-visible");
       prevLayer.classList.remove("is-visible");
-      prevLayer.classList.add("is-exiting");
-
-      hero.classList.add("is-transitioning");
-      if (flashTimer) window.clearTimeout(flashTimer);
-      flashTimer = window.setTimeout(() => {
-        hero.classList.remove("is-transitioning");
-      }, 780);
-
       showA = !showA;
     }
 
-    function setState(index, triggerEl, evt) {
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error(message || "Shader compile failed");
+      }
+      return shader;
+    }
+
+    function createProgram(gl, vertexSource, fragmentSource) {
+      const program = gl.createProgram();
+      const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+      const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      gl.deleteShader(vertexShader);
+      gl.deleteShader(fragmentShader);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        const message = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error(message || "Program link failed");
+      }
+      return program;
+    }
+
+    class WebGLMorphTransition {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.gl = canvas.getContext("webgl", { alpha: true, antialias: true, premultipliedAlpha: true });
+        this.ready = false;
+        this.visible = false;
+        this.animating = false;
+        this.progress = 1;
+        this.duration = 860;
+        this.currentIndex = -1;
+        this.pendingIndex = null;
+        this.startTime = 0;
+        this.fromTexture = null;
+        this.toTexture = null;
+        this.fromSize = [1, 1];
+        this.toSize = [1, 1];
+        this.textures = [];
+
+        if (!this.gl) return;
+        this.initPipeline();
+        this.startLoop();
+      }
+
+      initPipeline() {
+        const gl = this.gl;
+        const vertexSource = `
+          attribute vec2 a_position;
+          attribute vec2 a_uv;
+          varying vec2 v_uv;
+          void main() {
+            v_uv = a_uv;
+            gl_Position = vec4(a_position, 0.0, 1.0);
+          }
+        `;
+        const fragmentSource = `
+          precision highp float;
+          varying vec2 v_uv;
+          uniform sampler2D u_from;
+          uniform sampler2D u_to;
+          uniform float u_progress;
+          uniform float u_time;
+          uniform vec2 u_resolution;
+          uniform vec2 u_from_size;
+          uniform vec2 u_to_size;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+          }
+
+          float noise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(
+              mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+              mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+              u.y
+            );
+          }
+
+          float fbm(vec2 p) {
+            float value = 0.0;
+            float amplitude = 0.5;
+            for (int i = 0; i < 4; i++) {
+              value += amplitude * noise(p);
+              p *= 2.02;
+              amplitude *= 0.5;
+            }
+            return value;
+          }
+
+          vec2 coverUv(vec2 uv, vec2 texSize, vec2 screenSize) {
+            float rs = screenSize.x / screenSize.y;
+            float ri = texSize.x / texSize.y;
+            vec2 outUv = uv;
+            if (rs > ri) {
+              float s = ri / rs;
+              outUv.y = (uv.y - 0.5) * s + 0.5;
+            } else {
+              float s = rs / ri;
+              outUv.x = (uv.x - 0.5) * s + 0.5;
+            }
+            return outUv;
+          }
+
+          void main() {
+            float p = smoothstep(0.0, 1.0, u_progress);
+            vec2 flow = vec2(
+              fbm(v_uv * 4.0 + u_time * 0.12),
+              fbm(v_uv.yx * 4.8 - u_time * 0.09)
+            ) - 0.5;
+            float strength = sin(p * 3.14159265) * 0.11;
+
+            vec2 fromUv = coverUv(v_uv + flow * strength * (0.6 + p), u_from_size, u_resolution);
+            vec2 toUv = coverUv(v_uv - flow * strength * (1.6 - p), u_to_size, u_resolution);
+
+            vec4 cFrom = texture2D(u_from, fromUv);
+            vec4 cTo = texture2D(u_to, toUv);
+            gl_FragColor = mix(cFrom, cTo, p);
+          }
+        `;
+
+        this.program = createProgram(gl, vertexSource, fragmentSource);
+        gl.useProgram(this.program);
+
+        this.positionLocation = gl.getAttribLocation(this.program, "a_position");
+        this.uvLocation = gl.getAttribLocation(this.program, "a_uv");
+
+        const data = new Float32Array([
+          -1, -1, 0, 0,
+           1, -1, 1, 0,
+          -1,  1, 0, 1,
+          -1,  1, 0, 1,
+           1, -1, 1, 0,
+           1,  1, 1, 1
+        ]);
+
+        this.buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
+        gl.enableVertexAttribArray(this.positionLocation);
+        gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 16, 0);
+        gl.enableVertexAttribArray(this.uvLocation);
+        gl.vertexAttribPointer(this.uvLocation, 2, gl.FLOAT, false, 16, 8);
+
+        this.uniforms = {
+          from: gl.getUniformLocation(this.program, "u_from"),
+          to: gl.getUniformLocation(this.program, "u_to"),
+          progress: gl.getUniformLocation(this.program, "u_progress"),
+          time: gl.getUniformLocation(this.program, "u_time"),
+          resolution: gl.getUniformLocation(this.program, "u_resolution"),
+          fromSize: gl.getUniformLocation(this.program, "u_from_size"),
+          toSize: gl.getUniformLocation(this.program, "u_to_size")
+        };
+
+        this.whiteTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+      }
+
+      async preload(urls) {
+        if (!this.gl) return false;
+        try {
+          const textures = await Promise.all(urls.map((url) => this.loadTexture(url)));
+          this.textures = textures;
+          this.ready = true;
+          if (this.pendingIndex !== null) {
+            const next = this.pendingIndex;
+            this.pendingIndex = null;
+            this.setTarget(next);
+          }
+          return true;
+        } catch (error) {
+          console.error("WebGL preload failed:", error);
+          return false;
+        }
+      }
+
+      loadTexture(url) {
+        const gl = this.gl;
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.onload = () => {
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+            resolve({
+              texture,
+              size: [image.naturalWidth || image.width, image.naturalHeight || image.height]
+            });
+          };
+          image.onerror = reject;
+          image.src = url;
+        });
+      }
+
+      setTarget(index) {
+        if (!this.ready) {
+          this.pendingIndex = index;
+          return;
+        }
+        if (this.visible && this.currentIndex === index) return;
+
+        if (this.visible && this.currentIndex >= 0) {
+          const prev = this.textures[this.currentIndex];
+          this.fromTexture = prev.texture;
+          this.fromSize = prev.size;
+        } else {
+          this.fromTexture = this.whiteTexture;
+          this.fromSize = [1, 1];
+        }
+
+        const next = this.textures[index];
+        this.toTexture = next.texture;
+        this.toSize = next.size;
+        this.currentIndex = index;
+        this.visible = true;
+        this.animating = true;
+        this.progress = 0;
+        this.startTime = performance.now();
+      }
+
+      setIdle() {
+        this.visible = false;
+        this.animating = false;
+        this.currentIndex = -1;
+      }
+
+      resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.floor(this.canvas.clientWidth * dpr));
+        const height = Math.max(1, Math.floor(this.canvas.clientHeight * dpr));
+        if (this.canvas.width !== width || this.canvas.height !== height) {
+          this.canvas.width = width;
+          this.canvas.height = height;
+        }
+      }
+
+      render(time) {
+        if (!this.gl) return;
+        const gl = this.gl;
+        this.resize();
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        gl.clearColor(1, 1, 1, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        if (!this.visible || !this.ready || !this.toTexture) return;
+
+        if (this.animating) {
+          const elapsed = time - this.startTime;
+          this.progress = Math.min(elapsed / this.duration, 1);
+          if (this.progress >= 1) this.animating = false;
+        }
+
+        gl.useProgram(this.program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.fromTexture);
+        gl.uniform1i(this.uniforms.from, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.toTexture);
+        gl.uniform1i(this.uniforms.to, 1);
+
+        gl.uniform1f(this.uniforms.progress, this.progress);
+        gl.uniform1f(this.uniforms.time, time * 0.001);
+        gl.uniform2f(this.uniforms.resolution, this.canvas.width, this.canvas.height);
+        gl.uniform2f(this.uniforms.fromSize, this.fromSize[0], this.fromSize[1]);
+        gl.uniform2f(this.uniforms.toSize, this.toSize[0], this.toSize[1]);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      startLoop() {
+        const frame = (time) => {
+          this.render(time);
+          window.requestAnimationFrame(frame);
+        };
+        window.requestAnimationFrame(frame);
+      }
+    }
+
+    const webglMorph = new WebGLMorphTransition(webglCanvas);
+
+    function setState(index) {
       if (index === current) return;
       current = index;
       hero.classList.remove("is-idle");
       paintText(current);
-      paintBackground(current, getRevealPoint(triggerEl, evt));
+      if (webglEnabled) {
+        webglMorph.setTarget(current);
+      } else {
+        paintBackgroundFallback(current);
+      }
     }
 
     function setIdle() {
       current = -1;
       hero.classList.add("is-idle");
-      hero.classList.remove("is-transitioning");
-      if (flashTimer) {
-        window.clearTimeout(flashTimer);
-        flashTimer = null;
-      }
       textLinks.forEach((line) => line.classList.remove("is-active"));
-      bgLayers.forEach((layer) => layer.classList.remove("is-visible", "is-revealing", "is-exiting"));
-    }
-
-    function handleLayerAnimationEnd(evt) {
-      const layer = evt.currentTarget;
-      if (evt.animationName === "layerReveal") {
-        layer.classList.remove("is-revealing");
-      }
-      if (evt.animationName === "layerExit") {
-        layer.classList.remove("is-exiting");
+      if (webglEnabled) {
+        webglMorph.setIdle();
+      } else {
+        bgA.classList.remove("is-visible");
+        bgB.classList.remove("is-visible");
       }
     }
 
     function init() {
       setIdle();
-      bgLayers.forEach((layer) => layer.addEventListener("animationend", handleLayerAnimationEnd));
       textLinks.forEach((link, index) => {
-        link.addEventListener("mouseenter", (evt) => setState(index, link, evt));
-        link.addEventListener("focus", (evt) => setState(index, link, evt));
-        link.addEventListener("click", (evt) => setState(index, link, evt));
+        link.addEventListener("mouseenter", () => setState(index));
+        link.addEventListener("focus", () => setState(index));
+        link.addEventListener("click", () => setState(index));
         link.addEventListener("blur", () => {
           window.setTimeout(() => {
             if (!headline.contains(document.activeElement)) setIdle();
@@ -442,6 +664,15 @@
       hero.addEventListener("mouseleave", setIdle);
       window.addEventListener("resize", () => {
         if (current >= 0) placeHp(current);
+      });
+
+      webglMorph.preload(states.map((state) => state.image)).then((ok) => {
+        if (!ok) return;
+        webglEnabled = true;
+        hero.classList.add("has-webgl");
+        bgA.classList.remove("is-visible");
+        bgB.classList.remove("is-visible");
+        if (current >= 0) webglMorph.setTarget(current);
       });
     }
 
