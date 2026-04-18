@@ -506,6 +506,7 @@
             float motionGate = smoothstep(0.03, 0.28, diff);
             float wipeNoise = fbm(v_uv * vec2(24.0, 18.0) + vec2(u_time * 0.08, -u_time * 0.05));
             float mixAmt = clamp(e * (0.28 + 0.72 * motionGate) + (wipeNoise - 0.5) * 0.3 * glitch, 0.0, 1.0);
+            vec3 baseBlend = mix(fromCol, toCol, e);
             vec3 color = mix(fromCol, toCol, mixAmt);
 
             vec2 chromaUv = floor(v_uv * vec2(140.0, 84.0)) / vec2(140.0, 84.0);
@@ -521,7 +522,7 @@
             ycc.z = floor(ycc.z / qC + 0.5) * qC;
             color = ycbcr2rgb(ycc);
 
-            float corruptMask = step(0.975, hash(block + vec2(floor(u_time * 9.0), 3.7)));
+            float corruptMask = step(0.982, hash(block + vec2(floor(u_time * 9.0), 3.7)));
             if (corruptMask > 0.5) {
               vec2 jump = vec2(
                 hash(block + vec2(74.1, floor(u_time * 21.0))) - 0.5,
@@ -529,14 +530,16 @@
               ) * 0.5;
               vec2 corruptUv = coverUv(fract(v_uv + jump), u_from_size, u_resolution);
               vec3 corrupt = texture2D(u_from, corruptUv).bgr;
-              color = mix(color, corrupt, 0.82 * glitch);
+              color = mix(color, corrupt, 0.5 * glitch);
             }
 
-            float scan = sin(v_uv.y * u_resolution.y * 1.9) * 0.035 * (0.5 + glitch);
+            float scan = sin(v_uv.y * u_resolution.y * 1.9) * 0.018 * (0.4 + glitch);
             color -= scan;
 
             float luma = dot(color, vec3(0.299, 0.587, 0.114));
             color = mix(color, vec3(luma), 0.16 * glitch);
+            color = mix(baseBlend, color, 0.72);
+            color = max(color, vec3(0.035 * glitch));
 
             gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
           }
