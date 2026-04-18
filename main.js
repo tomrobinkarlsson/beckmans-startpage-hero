@@ -26,11 +26,11 @@ const CONFIG = {
 
   // GSAP animation timing
   duration: 1.0,         // Displacement morph duration (seconds)
-  ease: 'power2.inOut',  // Morph easing curve
-  revealDuration: 0.8,   // Alpha fade-in duration
-  revealEase: 'power3.out',
+  ease: 'power2.in',     // Smooth ease-in to next image
+  revealDuration: 0.6,   // Alpha fade-in duration
+  revealEase: 'power2.in',
   hideDuration: 0.5,     // Alpha fade-out duration
-  hideEase: 'power3.in',
+  hideEase: 'power2.in',
 
   // Mouse follow
   mouseLerp: 0.06,       // Smoothing factor (lower = smoother)
