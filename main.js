@@ -190,7 +190,6 @@ class DisplacementTransition {
     this.alphaTween = null;
     this.ready = false;
     this.raf = null;
-    this.pendingSwap = null;  // deferred texture swap to prevent flash
   }
 
   async init() {
@@ -300,55 +299,48 @@ class DisplacementTransition {
     if (this.activeTween) this.activeTween.kill();
     if (this.alphaTween) this.alphaTween.kill();
 
+    const u = this.program.uniforms;
     const isSwitch = this.toIndex >= 0 && this.toIndex < this.textures.length;
 
-    // Build the from/to texture data
-    let fromTex, fromRes;
+    // For image-to-image: set texture1 to the CURRENT visual output.
+    // If mid-transition, blend from/to into a snapshot by just keeping
+    // whatever is on screen (texture2 at current progress acts as "from").
     if (isSwitch) {
       const from = this.textures[this.toIndex];
-      fromTex = from.texture;
-      fromRes = [from.width, from.height];
+      u.uTexture1.value = from.texture;
+      u.uTex1Res.value = [from.width, from.height];
     } else {
-      fromTex = this.whiteTexture.texture;
-      fromRes = [1, 1];
+      u.uTexture1.value = this.whiteTexture.texture;
+      u.uTex1Res.value = [1, 1];
     }
+
     const to = this.textures[index];
+    u.uTexture2.value = to.texture;
+    u.uTex2Res.value = [to.width, to.height];
 
-    // Defer the texture swap + progress reset to the render loop so
-    // they are applied atomically on the same frame — prevents flash
-    this.pendingSwap = { fromTex, fromRes, toTex: to.texture, toRes: [to.width, to.height], index };
-  }
-
-  // Called from the render loop to apply pending texture swaps
-  applyPendingSwap() {
-    if (!this.pendingSwap) return;
-    const { fromTex, fromRes, toTex, toRes, index } = this.pendingSwap;
-    this.pendingSwap = null;
-
-    const u = this.program.uniforms;
-
-    // Set textures and reset progress atomically
-    u.uTexture1.value = fromTex;
-    u.uTex1Res.value = fromRes;
-    u.uTexture2.value = toTex;
-    u.uTex2Res.value = toRes;
+    // Reset progress synchronously BEFORE creating the tween.
+    // Both texture uniforms and progress are set in the same JS task,
+    // so the next render will see them together — no flash possible.
     this.progress.value = 0;
     u.uProgress.value = 0;
     this.toIndex = index;
 
-    // Start the displacement animation
-    this.activeTween = gsap.to(this.progress, {
-      value: 1,
-      duration: CONFIG.duration,
-      ease: CONFIG.ease,
-      onUpdate: () => { u.uProgress.value = this.progress.value; },
-    });
+    this.activeTween = gsap.fromTo(this.progress,
+      { value: 0 },
+      {
+        value: 1,
+        duration: CONFIG.duration,
+        ease: CONFIG.ease,
+        overwrite: true,
+        onUpdate: () => { u.uProgress.value = this.progress.value; },
+      }
+    );
 
-    // Fade in canvas alpha
     this.alphaTween = gsap.to(this.alpha, {
       value: 1,
       duration: CONFIG.revealDuration,
       ease: CONFIG.revealEase,
+      overwrite: true,
       onUpdate: () => { u.uAlpha.value = this.alpha.value; },
     });
   }
@@ -388,9 +380,6 @@ class DisplacementTransition {
   startLoop() {
     const loop = (t) => {
       this.raf = requestAnimationFrame(loop);
-
-      // Apply deferred texture swap before rendering (prevents flash)
-      this.applyPendingSwap();
 
       // Lerp mouse for smooth tracking
       this.mouse[0] += (this.targetMouse[0] - this.mouse[0]) * CONFIG.mouseLerp;
